@@ -122,12 +122,46 @@ function createUserFromCode(req, res){
         });
     });
 }
+function getUserData(req, res){
+    const userId = req.params.userId;
+    if(!userId){
+        return res.status(400).send({
+            error: 'Missing user id.'
+        });
+    }
+    mysql.getConnection((err, connection) => {
+        if(err){
+            return res.status(500).send({
+                error: err
+            });
+        }
+        connection.query(
+            'SELECT * FROM User WHERE id = ?;',
+            [userId],
+            (err, results) => {
+                connection.release();
+                if(err){
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
 
+                if(results.length === 0){
+                    return res.status(400).send({
+                        error: 'User not found.'
+                    });
+                }
+
+                return res.status(200).send({response: 'User found.', data: results[0]});
+            }
+        );
+    });
+}
 //routes
 
 router.post('/generate-code', generateCode); //this route will require admin authorization
 router.get('/validate-code', validateCode);
 router.post('/create', createUserFromCode);
-
+router.get('/get-user-data/:userId', getUserData);
 
 module.exports = router;
