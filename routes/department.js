@@ -10,6 +10,7 @@ const mysql = require('../lib/mysql').pool
 function createDepartment(req, res){
     const name = req.body.name;
     const owner = req.body.owner;
+    //TODO:RENAME OWNER TO ID IN THE FRONT TOO
 
     if(!name || !owner){
         return res.status(400).send({
@@ -161,6 +162,31 @@ function getAllDepartments(req, res){
     });
 }
 
+function getAllUsersByDepartment(req, res){
+    const id = req.params.id;
+    mysql.getConnection((err, connection) => {
+        if(err){
+            return res.status(500).send({
+                error: err
+            });
+        }
+        connection.query(
+            'SELECT User.* FROM User INNER JOIN Department where Department.department_id = ?;', [id],
+            (err, results) => {
+                connection.release();
+                if(err){
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
+
+                return res.status(200).send({response: 'Users found.', data: results});
+            }
+        );
+    });
+}
+
+
 //routes
 
 router.post('/create', createDepartment);
@@ -168,5 +194,6 @@ router.put('/update', updateDepartment);
 router.delete('/delete/:id', deleteDepartment);
 router.get('/get', getDepartment);
 router.get('/get-all', getAllDepartments);
+router.get('/get-all-by-department/:id',getAllUsersByDepartment);
 
 module.exports = router;

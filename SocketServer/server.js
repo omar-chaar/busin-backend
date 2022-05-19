@@ -17,8 +17,8 @@ io.on("connection", (socket) => {
     console.log(socket + " connected");
 });
 
-io.on('message',(socket) =>
+/* io.on('message',(socket) =>
     
-)
+) */
 
 httpServer.listen(3000);
