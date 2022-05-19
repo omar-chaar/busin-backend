@@ -9,9 +9,9 @@ SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 
-CREATE SCHEMA IF NOT EXISTS `mydb` DEFAULT CHARACTER SET utf8 ;
+CREATE SCHEMA IF NOT EXISTS `busin_main` DEFAULT CHARACTER SET utf8 ;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`Company` (
+CREATE TABLE IF NOT EXISTS `busin_main`.`Company` (
   `company_id` INT(11) NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(50) NULL DEFAULT NULL,
   PRIMARY KEY (`company_id`),
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS `mydb`.`Company` (
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`Department` (
+CREATE TABLE IF NOT EXISTS `busin_main`.`Department` (
   `department_id` INT(11) NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(50) NOT NULL,
   `company_id` INT(11) NOT NULL,
@@ -28,13 +28,13 @@ CREATE TABLE IF NOT EXISTS `mydb`.`Department` (
   UNIQUE INDEX `department_id_UNIQUE` (`department_id` ASC) VISIBLE,
   CONSTRAINT `company_id`
     FOREIGN KEY (`company_id`)
-    REFERENCES `mydb`.`Company` (`company_id`)
+    REFERENCES `busin_main`.`Company` (`company_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`User` (
+CREATE TABLE IF NOT EXISTS `busin_main`.`User` (
   `user_id` INT(11) NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(30) NOT NULL,
   `surname` VARCHAR(30) NOT NULL,
@@ -48,13 +48,13 @@ CREATE TABLE IF NOT EXISTS `mydb`.`User` (
   INDEX `department_id_idx` (`department_id` ASC) VISIBLE,
   CONSTRAINT `department_id`
     FOREIGN KEY (`department_id`)
-    REFERENCES `mydb`.`Department` (`department_id`)
+    REFERENCES `busin_main`.`Department` (`department_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`Announcement` (
+CREATE TABLE IF NOT EXISTS `busin_main`.`Announcement` (
   `announcement_id` INT(11) NOT NULL AUTO_INCREMENT,
   `announcement_body` VARCHAR(300) NOT NULL,
   `sender_id` INT(11) NOT NULL,
@@ -63,13 +63,13 @@ CREATE TABLE IF NOT EXISTS `mydb`.`Announcement` (
   INDEX `sender_id_idx` (`sender_id` ASC) VISIBLE,
   CONSTRAINT `sender_id`
     FOREIGN KEY (`sender_id`)
-    REFERENCES `mydb`.`User` (`user_id`)
+    REFERENCES `busin_main`.`User` (`user_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`AnnouncementReceiver` (
+CREATE TABLE IF NOT EXISTS `busin_main`.`AnnouncementReceiver` (
   `announcement_id` INT(11) NOT NULL AUTO_INCREMENT,
   `receiver_id` INT(11) NOT NULL,
   `time_saw` TIMESTAMP NOT NULL,
@@ -78,18 +78,18 @@ CREATE TABLE IF NOT EXISTS `mydb`.`AnnouncementReceiver` (
   INDEX `receiver_id_idx` (`receiver_id` ASC) VISIBLE,
   CONSTRAINT `receiver_id`
     FOREIGN KEY (`receiver_id`)
-    REFERENCES `mydb`.`User` (`user_id`)
+    REFERENCES `busin_main`.`User` (`user_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `announcement_id`
     FOREIGN KEY (`announcement_id`)
-    REFERENCES `mydb`.`Announcement` (`announcement_id`)
+    REFERENCES `busin_main`.`Announcement` (`announcement_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`Message` (
+CREATE TABLE IF NOT EXISTS `busin_main`.`Message` (
   `message_id` INT(11) NOT NULL AUTO_INCREMENT,
   `sender_id` INT(11) NOT NULL,
   `receiver_⁯id` INT(11) NOT NULL,
@@ -103,23 +103,23 @@ CREATE TABLE IF NOT EXISTS `mydb`.`Message` (
   INDEX `parent_id_idx` (`parent_message_id` ASC) VISIBLE,
   CONSTRAINT `sender_id`
     FOREIGN KEY (`sender_id`)
-    REFERENCES `mydb`.`User` (`user_id`)
+    REFERENCES `busin_main`.`User` (`user_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `receiver_id`
     FOREIGN KEY (`receiver_⁯id`)
-    REFERENCES `mydb`.`User` (`user_id`)
+    REFERENCES `busin_main`.`User` (`user_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `parent_id`
     FOREIGN KEY (`parent_message_id`)
-    REFERENCES `mydb`.`Message` (`message_id`)
+    REFERENCES `busin_main`.`Message` (`message_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`Group` (
+CREATE TABLE IF NOT EXISTS `busin_main`.`Group` (
   `group_id` INT(11) NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(50) NOT NULL,
   `group_creation_date` DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -128,25 +128,25 @@ CREATE TABLE IF NOT EXISTS `mydb`.`Group` (
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`GroupParticipant` (
+CREATE TABLE IF NOT EXISTS `busin_main`.`GroupParticipant` (
   `group_id` INT(11) NOT NULL,
   `user_id` INT(11) NOT NULL,
   PRIMARY KEY (`group_id`, `user_id`),
   INDEX `user_id_idx` (`user_id` ASC) VISIBLE,
   CONSTRAINT `group_id`
     FOREIGN KEY (`group_id`)
-    REFERENCES `mydb`.`Group` (`group_id`)
+    REFERENCES `busin_main`.`Group` (`group_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `user_id`
     FOREIGN KEY (`user_id`)
-    REFERENCES `mydb`.`User` (`user_id`)
+    REFERENCES `busin_main`.`User` (`user_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`GroupMessage` (
+CREATE TABLE IF NOT EXISTS `busin_main`.`GroupMessage` (
   `group_message_id` INT(11) NOT NULL AUTO_INCREMENT,
   `sender_id` INT(11) NOT NULL,
   `group_id` INT(11) NOT NULL,
@@ -159,23 +159,23 @@ CREATE TABLE IF NOT EXISTS `mydb`.`GroupMessage` (
   INDEX `group_id_idx` (`group_id` ASC) VISIBLE,
   CONSTRAINT `user_id`
     FOREIGN KEY (`sender_id`)
-    REFERENCES `mydb`.`User` (`user_id`)
+    REFERENCES `busin_main`.`User` (`user_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `group_id`
     FOREIGN KEY (`group_id`)
-    REFERENCES `mydb`.`Group` (`group_id`)
+    REFERENCES `busin_main`.`Group` (`group_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `parent_message`
     FOREIGN KEY (`group_message_id`)
-    REFERENCES `mydb`.`GroupMessage` (`group_message_id`)
+    REFERENCES `busin_main`.`GroupMessage` (`group_message_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`Schedule` (
+CREATE TABLE IF NOT EXISTS `busin_main`.`Schedule` (
   `schedule_id` INT(11) NOT NULL AUTO_INCREMENT,
   `work_date` DATE NOT NULL,
   `start_time` TIME NOT NULL,
@@ -186,7 +186,7 @@ CREATE TABLE IF NOT EXISTS `mydb`.`Schedule` (
   INDEX `user_id_idx` (`user_id` ASC) VISIBLE,
   CONSTRAINT `user_id`
     FOREIGN KEY (`user_id`)
-    REFERENCES `mydb`.`User` (`user_id`)
+    REFERENCES `busin_main`.`User` (`user_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
