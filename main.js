@@ -31,9 +31,11 @@ app.use((req, res, next) => {
 //Routes
 const userRoute = require('./routes/user');
 const departmentRoute = require('./routes/department')
+const announcementRoute = require('./routes/announcement')
 
 app.use('/user', userRoute);
 app.use('/department', departmentRoute);
+app.use('/announcement', announcementRoute);
 //app.use('/uploads', express.static(path.join(__dirname, '/uploads')))
 
 app.use((req, res, next) => {
