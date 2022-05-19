@@ -6,117 +6,128 @@ const mysql = require('../lib/mysql').pool
 
 //functions
 
-function generateToken(req, res){
-    const departmentId = req.query.departamentId;
-    const position = req.query.position;
-    const admin = req.query.admin || false;
+function generateCode(req, res){
+    const departmentId = req.body.departamentId;
+    const position = req.body.position;
+    const name = req.body.name;
+    const surname = req.body.surname;
+    const admin = req.body.admin || false;
 
-    if(!departmentId || !position){
+    if(!departmentId || !position || !name || !surname){
         return res.status(400).send({
-            error: 'Missing departament or position'
+            error: 'Missing information.'
         });
     }
 
-    const token = jwt.sign({
-        departmentId,
-        position,
-        admin
-    }, process.env.JWT_KEY, {
-        expiresIn: '24h'
-    })
-
-    return res.status(200).send({response: 'Code successfully generated. You have 24h to use it.', data: token});
-}
-
-function validateToken(req, res){
-    const token = req.query.token;
-    if(!token){
-        return res.status(400).send({
-            error: 'Missing code.'
-        });
+    let length = 5, chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", code = "";
+    for (var i = 0, n = chars.length; i < length; ++i) {
+      code += chars.charAt(Math.floor(Math.random() * n
+      ));
     }
 
-    jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
+    mysql.getConnection((err, connection) => {
         if(err){
-            return res.status(401).send({
-                error: 'Invalid code.'
+            return res.status(500).send({
+                error: err
             });
         }
+        connection.query(
+            'INSERT INTO User (name, surname, department_id, position, is_adm, is_owner, reg_code) VALUES (?, ?, ?, ?, ?, ?, ?);',
+            [name, surname, departmentId, position, admin, false, code],
+            (err, results) => {
+                connection.release();
+                if(err){
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
 
-        return res.status(200).send({
-            response: 'Code successfully validated.',
-            data: token
-        });
+                return res.status(200).send({response: 'Code generated. Send it to the user so he can finish the registration.', data: code});
+            }
+        );
     });
 }
 
-function createUserFromToken(req, res){
-    const token = req.body.token;
+function validateCode(req, res){
+    const code = req.query.token;
+    
+    mysql.getConnection((err, connection) => {
+        if(err){
+            return res.status(500).send({
+                error: err
+            });
+        }
+        connection.query(
+            'SELECT reg_code FROM User WHERE reg_code = ?;',
+            [code],
+            (err, results) => {
+                connection.release();
+                if(err){
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
+
+                if(results.length === 0){
+                    return res.status(400).send({
+                        error: 'Invalid code.'
+                    });
+                }
+
+                return res.status(200).send({response: 'Code is valid.'});
+            }
+        );
+    });
+}
+
+function createUserFromCode(req, res){
     const password = req.body.password;
     const email = req.body.email;
-    const name = req.body.name;
-    const surname = req.body.surname;
-    let departmentId;
-    let position;
-    let admin;
+    const code = req.body.code;
 
-    if(!token || !password || !email){
+    if(!password || !email){
         return res.status(400).send({
-            error: 'Missing code, password or email.'
+            error: 'Missing password or email.'
         });
     }
 
-    jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
+    bcrypt.hash(password, 10, (err, hash) => {
         if(err){
-            return res.status(401).send({
-                error: 'Invalid code.'
+            return res.status(500).send({
+                error: err
             });
         }
 
-        bcrypt.hash(password, 10, (err, hash) => {
+        mysql.getConnection((err, connection) => {
             if(err){
                 return res.status(500).send({
-                    error: 'Error creating user.'
+                    error: err
                 });
             }
-
-            departmentId = parseInt(decoded.departamentId);
-            position = decoded.position;
-            admin = decoded.admin;
-
-            mysql.getConnection((err, connection) => {
-                if(err){
-                    return res.status(500).send({
-                        error: 'Error creating user.'
-                    });
-                }
-                connection.query(
-                    'INSERT INTO User (department_id, position, email, password, name, surname) VALUES (?, ?, ?, ?, ?, ?);',
-                    [departmentId, position, email, hash, name, surname],
-                    (err, results) => {
-                        connection.release();
+            connection.query(
+                'UPDATE User SET password = ?, email = ? WHERE reg_code = ?;',
+                [hash, email, code],
+                (err, results) => {
+                    connection.release();
+                    if(err){
                         console.log(err)
-                        if(err){
-                            return res.status(500).send({
-                                error: 'Error creating user.'
-                            });
-                        }
-
-                        return res.status(200).send({
-                            response: 'User successfully created.'
+                        return res.status(500).send({
+                            error: 'Failed to register user. Try Again.'
                         });
                     }
-                )
-            })
+
+                    return res.status(200).send({response: 'User created.'});
+                }
+            )
         });
     });
 }
 
 //routes
 
-router.get('/generate-token', generateToken); //this route will require admin authorization
-router.get('/validate-token', validateToken);
-router.post('/create-user', createUserFromToken);
+router.post('/generate-code', generateCode); //this route will require admin authorization
+router.get('/validate-code', validateCode);
+router.post('/create-user', createUserFromCode);
 
 
 module.exports = router;
