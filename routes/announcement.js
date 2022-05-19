@@ -42,7 +42,7 @@ function addAnnouncementReceivers(req, res){
             });
         }
         connection.query(
-            'INSERT INTO AnnouncementReceiver (announcement_id,receiver_id, time_saw, has_seen) SELECT ?, User.user_id, null, false FROM Company INNER JOIN Department ON Department.company_id = Company.company_id INNER JOIN User ON Department.department_id = User.department_id WHERE Company.company_id = ?;',
+            'INSERT INTO AnnouncementReceiver (announcement_id,receiver_id, has_seen) SELECT ?, User.user_id, false FROM Company INNER JOIN Department ON Department.company_id = Company.company_id INNER JOIN User ON Department.department_id = User.department_id WHERE Company.company_id = ?;',
             [announcementId, companyId],
             (err, results) => {
                 connection.release();
