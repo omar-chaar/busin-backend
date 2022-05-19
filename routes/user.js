@@ -127,7 +127,7 @@ function createUserFromCode(req, res){
 
 router.post('/generate-code', generateCode); //this route will require admin authorization
 router.get('/validate-code', validateCode);
-router.post('/create-user', createUserFromCode);
+router.post('/create', createUserFromCode);
 
 
 module.exports = router;
