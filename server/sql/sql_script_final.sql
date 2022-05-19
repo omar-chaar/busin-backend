@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS `busin_main`.`Message` (
   PRIMARY KEY (`message_id`),
   UNIQUE INDEX `message_id_UNIQUE` (`message_id` ASC) VISIBLE,
   INDEX `sender_id_idx` (`sender_id` ASC) VISIBLE,
-  INDEX `receiver_D_idx` (`receiver_⁯id` ASC) VISIBLE,
+  INDEX `receiver_id_idx` (`receiver_⁯id` ASC) VISIBLE,
   INDEX `parent_id_idx` (`parent_message_id` ASC) VISIBLE,
   CONSTRAINT `sender_id`
     FOREIGN KEY (`sender_id`)
