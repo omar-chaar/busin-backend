@@ -7,7 +7,7 @@ const mysql = require('../lib/mysql').pool
 //functions
 
 function generateCode(req, res){
-    const departmentId = req.body.departamentId;
+    const departmentId = req.body.departmentId;
     const position = req.body.position;
     const name = req.body.name;
     const surname = req.body.surname;
