@@ -59,7 +59,7 @@ function addAnnouncementReceivers(req, res){
 }
 
 
-function getAllAnnouncementsByUser (req, rep){
+function getAllAnnouncementsForUser (req, res){
     const userId = req.params.userId;
     mysql.getConnection((err, connection) => {
         if(err){
@@ -68,7 +68,7 @@ function getAllAnnouncementsByUser (req, rep){
             });
         }
         connection.query(
-            'SELECT User.* FROM User INNER JOIN Department where Department.department_id = ?;', [id],
+            'SELECT * FROM Announcement INNER JOIN AnnouncementReceiver where Announcement.announcement_id = AnnouncementReceiver.announcement_id AND receiver_id = ?;', [userId],
             (err, results) => {
                 connection.release();
                 if(err){
@@ -84,6 +84,6 @@ function getAllAnnouncementsByUser (req, rep){
 }
 
 router.post('/create', createAnnouncement, addAnnouncementReceivers);
-router.get('/get-all-announcements-by-user/:userId', getAllAnnouncementsByUser);
+router.get('/get-all-announcements-for-user/:userId', getAllAnnouncementsForUser);
 
 module.exports = router;
