@@ -122,6 +122,7 @@ function createUserFromCode(req, res){
         });
     });
 }
+
 function getUserData(req, res){
     const userId = req.params.userId;
     if(!userId){
@@ -159,9 +160,47 @@ function getUserData(req, res){
 }
 //routes
 
+function editUserData(req, res){
+    const userId = req.params.userId;
+    const name = req.body.name;
+    const surname = req.body.surname;
+    const departmentId = req.body.departmentId;
+    const position = req.body.position;
+    const admin = req.body.admin || false;
+    
+    if(!userId || !name || !surname || !departmentId || !position){
+        return res.status(400).send({
+            error: 'Missing information.'
+        });
+    }
+
+    mysql.getConnection((err, connection) => {
+        if(err){
+            return res.status(500).send({
+                error: err
+            });
+        }
+        connection.query(
+            'UPDATE User SET name = ?, surname = ?, department_id = ?, position = ?, is_adm = ? WHERE user_id = ?;',
+            [name, surname, departmentId, position, admin, userId],
+            (err, results) => {
+                connection.release();
+                if(err){
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
+
+                return res.status(200).send({response: 'User updated.'});
+            }
+        );
+    });
+}
+
 router.post('/generate-code', generateCode); //this route will require admin authorization
 router.get('/validate-code', validateCode);
 router.post('/create', createUserFromCode);
 router.get('/get-user-data/:userId', getUserData);
+router.put('/edit-user-data/:userId', editUserData);
 
 module.exports = router;
