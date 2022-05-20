@@ -197,10 +197,87 @@ function editUserData(req, res){
     });
 }
 
+function editUserEmail(req, res){
+    const userId = req.params.userId;
+    const email = req.body.email;
+
+    if(!userId || !email){
+        return res.status(400).send({
+            error: 'Missing information.'
+        });
+    }
+
+    mysql.getConnection((err, connection) => {
+        if(err){
+            return res.status(500).send({
+                error: err
+            });
+        }
+        connection.query(
+            'UPDATE User SET email = ? WHERE user_id = ?;',
+            [email, userId],
+            (err, results) => {
+                connection.release();
+                if(err){
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
+
+                return res.status(200).send({response: 'User updated.'});
+            }
+        );
+    });
+}
+
+//Change use password in safe manner
+function editUserPassword(req, res){
+    const userId = req.params.userId;
+    const password = req.body.password;
+
+    if(!userId || !password){
+        return res.status(400).send({
+            error: 'Missing information.'
+        });
+    }
+
+    bcrypt.hash(password, 10, (err, hash) => {
+        if(err){
+            return res.status(500).send({
+                error: err
+            });
+        }
+
+        mysql.getConnection((err, connection) => {
+            if(err){
+                return res.status(500).send({
+                    error: err
+                });
+            }
+            connection.query(
+                'UPDATE User SET password = ? WHERE user_id = ?;',
+                [hash, userId],
+                (err, results) => {
+                    connection.release();
+                    if(err){
+                        return res.status(500).send({
+                            error: err
+                        });
+                    }
+
+                    return res.status(200).send({response: 'User updated.'});
+                }
+            );
+        });
+    });
+
+}
 router.post('/generate-code', generateCode); //this route will require admin authorization
 router.get('/validate-code', validateCode);
 router.post('/create', createUserFromCode);
 router.get('/get-user-data/:userId', getUserData);
 router.put('/edit-user-data/:userId', editUserData);
+router.put('/edit-user-email/:userId', editUserEmail);
+router.put('/edit-user-password/:userId', editUserPassword);
 
 module.exports = router;
