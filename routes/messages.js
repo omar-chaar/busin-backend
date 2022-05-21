@@ -1,6 +1,7 @@
 const express = require('express')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt');
+const { request } = require('../main');
 const router = express.Router()
 const mysql = require('../lib/mysql').pool
 
@@ -23,7 +24,7 @@ function getMessageForUser(req, res) {
             }
             connection.query(
                 'SELECT * FROM Message WHERE (receiver_id = ? OR sender_id = ?) AND message_id IS NOT IN (SELECT parent_message_id FROM Message)  ORDER BY time DESC LIMIT 10;',
-                [userId],
+                [userId, userId],
                 (err, results) => {
                     connection.release();
                     if (err) {
@@ -130,8 +131,41 @@ function getGroupMessageForUser(req, res) {
 }
 
 
+function getParentMessage(req, res) {
+    const messageId = req.params.messageId;
+    if (!messageId) {
+        return res.status(400).send({
+            error: 'Missing messageId.'
+        });
+    }
+    mysql.getConnection((err, connection) => {
+        if (err) {
+            return res.status(500).send({
+                error: err
+            });
+        }
+        connection.query(
+            'SELECT TOP * FROM Message WHERE message_id = (SELECT parent_message_id FROM Message WHERE message_id = ?) LIMIT 1;',
+            [messageId],
+            (err, results) => {
+                connection.release();
+                if (err) {
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
+                return res.status(200).send({
+                    messages: results
+                });
+            }
+        );
+    }
+    );
+}
+
 router.get('/messages/:userId', getMessageForUser);
 router.get('/groupmessages/:userId', getGroupMessageForUser);
+router.get('/parentmessage/:messageId', getParentMessage);
 
 
 
