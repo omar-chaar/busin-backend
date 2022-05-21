@@ -43,6 +43,7 @@ app.use('/department', departmentRoute);
 app.use('/announcement', announcementRoute);
 app.use('/schedule', scheduleRoute);
 app.use('/messages', messagesRoute);
+app.use('/company', companyRouter);
 //app.use('/uploads', express.static(path.join(__dirname, '/uploads')))
 
 app.use((req, res, next) => {
