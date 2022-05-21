@@ -1,13 +1,15 @@
 const express = require('express')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt');
+const { connect } = require('./user');
 const router = express.Router()
 const mysql = require('../lib/mysql').pool
 
 
 
 function createAnnouncement(req, res, next){
-    const body = req.body.body;
+    const title = req.body.title;
+    const body = req.body.body;    
     const senderId = req.body.senderId;
     mysql.getConnection((err, connection) => {
         if(err){
@@ -16,8 +18,8 @@ function createAnnouncement(req, res, next){
             });
         }
         connection.query(
-            'INSERT INTO Announcement (announcement_body, sender_id) VALUES (?, ?);',
-            [body, senderId],
+            'INSERT INTO Announcement (announcement_title, announcement_body, sender_id) VALUES (?, ?);',
+            [title,body, senderId],
             (err, results) => {
                 connection.release();
                 if(err){
@@ -25,8 +27,22 @@ function createAnnouncement(req, res, next){
                         error: err
                     });
                 }
-                res.locals.announcementId = results.insertId;
-                next();
+                es.locals.announcementId = results.insertId;
+                console.log(results.insertId);
+                connection.query(
+                    'SELECT company_id FROM Company INNER JOIN Department ON Department.company_id = Company.company_id INNER JOIN User ON Department.department_id = User.department_id WHERE User.user_id = ?;',
+                    [senderId],
+                    (err, results) => {
+                        connection.release();
+                        if(err){
+                            return res.status(500).send({
+                                error: err
+                            });
+                        }
+                        res.locals.companyId = results[0].company_id;
+                        next();
+                    }
+                )
             }
         );
     });
