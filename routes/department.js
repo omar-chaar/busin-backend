@@ -9,10 +9,9 @@ const mysql = require('../lib/mysql').pool
 
 function createDepartment(req, res){
     const name = req.body.name;
-    const owner = req.body.owner;
-    //TODO:RENAME OWNER TO ID IN THE FRONT TOO
+    const companyId = req.body.companyId;
 
-    if(!name || !owner){
+    if(!name || !companyId){
         return res.status(400).send({
             error: 'Missing information.'
         });
@@ -26,7 +25,7 @@ function createDepartment(req, res){
         }
         connection.query(
             'INSERT INTO Department (name, company_id) VALUES (?, ?);',
-            [name, owner],
+            [name, companyId],
             (err, results) => {
                 connection.release();
                 if(err){
@@ -36,7 +35,7 @@ function createDepartment(req, res){
                     });
                 }
 
-                return res.status(200).send({response: 'Department created.', data: {id: results.insertId, name: name, owner: owner}});
+                return res.status(200).send({response: 'Department created.', data: {id: results.insertId, departmentName: name, companyId: companyId}});
             }
         );
     });
@@ -76,7 +75,7 @@ function updateDepartment(req, res){
 }
 
 function deleteDepartment(req, res){
-    const id = req.params.id;
+    const id = req.body.id;
 
     if(!id){
         return res.status(400).send({
@@ -140,7 +139,7 @@ function getDepartment(req, res){
 }
 
 function getAllDepartments(req, res){
-    const companyId = req.body.companyId;
+    const companyId = req.param.companyId;
     mysql.getConnection((err, connection) => {
         if(err){
             return res.status(500).send({
@@ -165,7 +164,7 @@ function getAllDepartments(req, res){
 }
 
 function getAllUsersByDepartment(req, res){
-    const id = req.params.id;
+    const departmentId = req.params.departmentId;
     mysql.getConnection((err, connection) => {
         if(err){
             return res.status(500).send({
@@ -173,7 +172,7 @@ function getAllUsersByDepartment(req, res){
             });
         }
         connection.query(
-            'SELECT User.* FROM User INNER JOIN Department where Department.department_id = ?;', [id],
+            'SELECT User.* FROM User INNER JOIN Department where Department.department_id = ?;', [departmentId],
             (err, results) => {
                 connection.release();
                 if(err){
@@ -193,9 +192,9 @@ function getAllUsersByDepartment(req, res){
 
 router.post('/create', createDepartment);
 router.put('/update', updateDepartment);
-router.delete('/delete/:id', deleteDepartment);
-router.get('/get', getDepartment);
-router.get('/get-all', getAllDepartments);
-router.get('/get-all-by-department/:id',getAllUsersByDepartment);
+router.delete('/delete', deleteDepartment);
+router.get('/get-name/:departmentId', getDepartment);
+router.get('/get-departments/:companyId', getAllDepartments);
+router.get('/get-users/:departmentId',getAllUsersByDepartment);
 
 module.exports = router;
