@@ -352,63 +352,55 @@ function userLogin(req, res) {
             error: 'Missing information.'
         });
     }
-
-    bcrypt.hash(password, 10, (err, hash) => {
+    mysql.getConnection((err, connection) => {
         if (err) {
             return res.status(500).send({
                 error: err
             });
         }
+        connection.query(
+            'SELECT * FROM User WHERE email = ?',
+            [email],
+            (err, results) => {
+                connection.release();
+                if (err) {
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
 
-        mysql.getConnection((err, connection) => {
-            if (err) {
-                return res.status(500).send({
-                    error: err
-                });
-            }
-            connection.query(
-                'SELECT * FROM User WHERE email = ?',
-                [email],
-                (err, results) => {
-                    connection.release();
+                if (results.length === 0) {
+                    return res.status(400).send({
+                        error: 'Email incorrect.'
+                    });
+                }
+
+                bcrypt.compare(password, results[0].password, (err, result) => {
                     if (err) {
                         return res.status(500).send({
                             error: err
                         });
                     }
+                    console.log(result);
+                    if (result) {
+                        jwt.sign({ userId: results[0] }, process.env.JWT_KEY, (err, token) => {
+                            if (err) {
+                                return res.status(500).send({
+                                    error: err
+                                });
+                            }
 
-                    if (results.length === 0) {
-                        return res.status(400).send({
-                            error: 'Email incorrect.'
+                            return res.status(200).send({ response: 'User found.', data: results[0], token: token });
                         });
-                    }
 
-                    bcrypt.compare(password, results[0].password, (err, result) => {
-                        if (err) {
-                            return res.status(500).send({
-                                error: err
-                            });
-                        }
-
-                        if (result) {
-                            jwt.sign({ userId: results[0] }, process.env.JWT_KEY, (err, token) => {
-                                if (err) {
-                                    return res.status(500).send({
-                                        error: err
-                                    });
-                                }
-
-                                return res.status(200).send({ response: 'User found.', data: results[0], token: token });
-                            });
-
-                        } return res.status(400).send({
-                            error: 'Password incorrect.'
-                        });
+                    } else return res.status(400).send({
+                        error: 'Password incorrect.'
                     });
-                }
-            );
-        });
+                });
+            }
+        );
     });
+
 }
 
 router.post('/generate-code', generateCode); //this route will require admin authorization

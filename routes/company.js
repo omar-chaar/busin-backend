@@ -68,7 +68,7 @@ function createCompany(req, res){
                                         });
                                     }
                                     connection.query(
-                                        'INSERT INTO User (name, surname, email, password, position, department_id) VALUES (?, ?, ?, ?, ?, (SELECT department_id FROM Department WHERE name = \'Owner\' AND company_id = (SELECT company_id FROM Company WHERE name = ?)));',
+                                        'INSERT INTO User (name, surname, email, password, position, department_id, is_adm, is_owner) VALUES (?, ?, ?, ?, ?, (SELECT department_id FROM Department WHERE name = \'Owner\' AND company_id = (SELECT company_id FROM Company WHERE name = ?)), 1, 1);',
                                         [name, surname, email, hash, position, companyName],
                                         (err, results) => {
                                             connection.release();
@@ -92,7 +92,7 @@ function createCompany(req, res){
     });
 }
 
-route.post('/create', createCompany);
+router.post('/create', createCompany);
 
 module.exports = router;
 
