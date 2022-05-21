@@ -4,6 +4,8 @@ const bcrypt = require('bcrypt');
 const { connect } = require('./user');
 const router = express.Router()
 const mysql = require('../lib/mysql').pool
+const adminAuth = require('../middlewares/adminAuthorization');
+const userAuth = require('../middlewares/userAuthorization');
 
 
 
@@ -62,12 +64,12 @@ function addAnnouncementReceivers(req, res){
             (err, results) => {
                 connection.release();
                 if(err){
-                    console.log(err)
                     return res.status(500).send({
                         error: err
                     });
                 }
-                return res.status(200).send({response: 'AnnouncementReceiver created.', data: {id: results.insertId, announcementId: announcementId}});
+                return res.status(200).send({response: 'AnnouncementReceiver created.', data: {id: results.insertId, announcementId: announcementId, 
+                                                                                        body: req.body.body, title: req.body.title, sender: req.body.senderId}});
             }
         );
     });
@@ -99,7 +101,7 @@ function getAllAnnouncementsForUser (req, res){
     });
 }
 
-router.post('/create', createAnnouncement, addAnnouncementReceivers);
-router.get('/get-all-announcements-for-user/:userId', getAllAnnouncementsForUser);
+router.post('/create', adminAuth, createAnnouncement, addAnnouncementReceivers);
+router.get('/get-all-announcements-for-user/:userId', userAuth, getAllAnnouncementsForUser);
 
 module.exports = router;

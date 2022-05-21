@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt');
 const router = express.Router()
 const mysql = require('../lib/mysql').pool
+const adminAuth = require('../middlewares/adminAuthorization');
+const userAuth = require('../middlewares/userAuthorization');
 
 //functions
 
@@ -110,7 +112,6 @@ function createUserFromCode(req, res) {
                 (err, results) => {
                     connection.release();
                     if (err) {
-                        console.log(err)
                         return res.status(500).send({
                             error: 'Failed to register user. Try Again.'
                         });
@@ -381,15 +382,13 @@ function userLogin(req, res) {
                             error: err
                         });
                     }
-                    console.log(result);
                     if (result) {
-                        jwt.sign({ userId: results[0] }, process.env.JWT_KEY, (err, token) => {
+                        jwt.sign({ userId: results[0].user_id, adm: results[0].is_adm, owner: results[0].is_owner }, process.env.JWT_KEY, (err, token) => {
                             if (err) {
                                 return res.status(500).send({
                                     error: err
                                 });
                             }
-
                             return res.status(200).send({ response: 'User found.', data: results[0], token: token });
                         });
 
@@ -406,12 +405,12 @@ function userLogin(req, res) {
 router.post('/generate-code', generateCode); //this route will require admin authorization
 router.get('/validate-code', validateCode);
 router.post('/create', createUserFromCode);
-router.get('/get-user-data/:userId', getUserData);
-router.put('/edit-user-data/:userId', editUserData);
-router.put('/edit-user-email/:userId', editUserEmail);
-router.put('/edit-user-password/:userId', editUserPassword);
-router.put('/update-user-image/:userId', updateUserImage);
-router.get('/get-user-image/:userId', getUserImage);
+router.get('/get-user-data/:userId', userAuth, getUserData);
+router.put('/edit-user-data/:userId', userAuth, editUserData);
+router.put('/edit-user-email/:userId', userAuth, editUserEmail);
+router.put('/edit-user-password/:userId', userAuth, editUserPassword);
+router.put('/update-user-image/:userId', userAuth, updateUserImage);
+router.get('/get-user-image/:userId', userAuth, getUserImage);
 router.post('/login', userLogin);
 
 module.exports = router;
