@@ -168,7 +168,7 @@ function getParentMessage(req, res) {
 router.get('/messages/:userId', getMessageForUser);
 router.get('/groupmessages/:userId', getGroupMessageForUser);
 router.get('/parentmessage/:messageId', getParentMessage);
-
+// router.post('/insert-message', insertMessage);
 
 
 
