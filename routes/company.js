@@ -91,8 +91,74 @@ function createCompany(req, res){
         });
     });
 }
+//get all company information 
+function getCompany(req, res){
+    const companyId = req.params.companyId;
+    if (!companyName) {
+        return res.status(400).send({
+            error: 'Missing Company Id.'
+        });
+    }
+    mysql.getConnection((err, connection) => {
+        if (err) {
+            return res.status(500).send({
+                error: err
+            });
+        }
+        connection.query(
+            'SELECT * FROM Company WHERE company_id = ?;',
+            [companyId],
+            (err, results) => {
+                connection.release();
+                if (err) {
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
+                return res.status(200).send({
+                    response: results
+                });
+            }
+        );
+    });
+}
+function getCompanyByDepartment(req, res){
+    const departmentId = req.params.departmentId;
+    if (!departmentId) {
+        return res.status(400).send({
+            error: 'Missing Department Id.'
+        });
+    }
+    mysql.getConnection((err, connection) => {
+        if (err) {
+            return res.status(500).send({
+                error: err
+            });
+        }
+        connection.query(
+            'SELECT * FROM Company WHERE company_id = (SELECT company_id FROM Department WHERE department_id = ?);',
+            [departmentId],
+            (err, results) => {
+                connection.release();
+                if (err) {
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
+                return res.status(200).send({
+                    response: results
+                });
+            }
+        );
+    });
+}
 
+
+
+router.get('/get/:id', getCompany);
+router.get('/get/department/:id', getCompanyByDepartment);
 router.post('/create', createCompany);
+
 
 module.exports = router;
 
