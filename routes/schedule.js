@@ -40,6 +40,6 @@ function editSchedule(req, res){
     });
 }
 
-
+router.put('/:userId', editSchedule);
 
 module.exports = router;
