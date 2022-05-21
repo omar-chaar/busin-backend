@@ -140,6 +140,7 @@ function getDepartment(req, res){
 }
 
 function getAllDepartments(req, res){
+    const companyId = req.body.companyId;
     mysql.getConnection((err, connection) => {
         if(err){
             return res.status(500).send({
@@ -147,7 +148,8 @@ function getAllDepartments(req, res){
             });
         }
         connection.query(
-            'SELECT department_id, name, company_id FROM Department;',
+            'SELECT department_id, name, company_id FROM Department where company_id = ?;',
+            [companyId],
             (err, results) => {
                 connection.release();
                 if(err){
@@ -156,7 +158,7 @@ function getAllDepartments(req, res){
                     });
                 }
 
-                return res.status(200).send({response: 'Department found.', data: results});
+                return res.status(200).send({response: 'Departments found.', data: results});
             }
         );
     });
