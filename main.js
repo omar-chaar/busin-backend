@@ -37,6 +37,7 @@ const announcementRoute = require('./routes/announcement')
 const messagesRoute = require('./routes/messages')
 const scheduleRoute = require('./routes/schedule')
 const companyRouter = require('./routes/company')
+const groupRouter = require('./routes/group')
 
 app.use('/user', userRoute);
 app.use('/department', departmentRoute);
@@ -44,6 +45,7 @@ app.use('/announcement', announcementRoute);
 app.use('/schedule', scheduleRoute);
 app.use('/messages', messagesRoute);
 app.use('/company', companyRouter);
+app.use('/group', groupRouter);
 //app.use('/uploads', express.static(path.join(__dirname, '/uploads')))
 
 app.use((req, res, next) => {
