@@ -18,16 +18,18 @@ function getMessageForUser(req, res) {
         //send the last 10 messages
         mysql.getConnection((err, connection) => {
             if (err) {
+                console.log(err)
                 return res.status(500).send({
                     error: err
                 });
             }
             connection.query(
-                'SELECT * FROM Message WHERE (receiver_id = ? OR sender_id = ?) AND message_id IS NOT IN (SELECT parent_message_id FROM Message)  ORDER BY time DESC LIMIT 10;',
+                'SELECT * FROM Message WHERE (receiver_id = ? OR sender_id = ?) AND message_id NOT IN (SELECT parent_message_id FROM Message WHERE NOT NULL) ORDER BY time DESC LIMIT 10;',
                 [userId, userId],
                 (err, results) => {
                     connection.release();
                     if (err) {
+                        console.log(err)
                         return res.status(500).send({
                             error: err
                         });
@@ -49,7 +51,7 @@ function getMessageForUser(req, res) {
             connection.query(
                 //get time from lastMessageId and check next 10 messages
                 'SELECT * FROM Message WHERE (receiver_id = ? OR sender_id = ?) AND time < (SELECT time FROM Message WHERE message_id = ?) ORDER BY id DESC LIMIT 10;',
-                [userId, lastMessageId],
+                [userId, userId, lastMessageId],
                 (err, results) => {
                     connection.release();
                     if (err) {
@@ -85,7 +87,7 @@ function getGroupMessageForUser(req, res) {
                 });
             }
             connection.query(
-                'SELECT * FROM GroupMessage WHERE group_id IN (SELECT group_id FROM GroupParticipant WHERE user_id = ?) AND group_message_id IS NOT IN (SELECT parent_message_id FROM GroupMessage)  ORDER BY time DESC LIMIT 10;',
+                'SELECT * FROM GroupMessage WHERE group_id IN (SELECT group_id FROM GroupParticipant WHERE user_id = ?) AND group_message_id NOT IN (SELECT parent_message_id FROM GroupMessage WHERE NOT NULL)  ORDER BY time DESC LIMIT 10;',
                 [userId],
                 (err, results) => {
                     connection.release();
