@@ -1,24 +1,11 @@
-const express = require("express");
-const { createServer } = require("http");
-const { Server } = require("socket.io");
+const app = require('express')();
+const server = require('http').createServer(app);
+const io = require('socket.io')(server);
 
 
-const app = express();
-const httpServer = createServer(app);
-const io = new Server(httpServer, {    
-    cors: {origin: "*"} //TODO: REMOVE THIS AT FINAL BUILD
-});
+io.on('connection', () => {
+    //console log with socket id
+    console.log(socket.id + ' user connected');
+    /* … */ });
 
-app.use(express.static('public'));
-
-
-
-io.on("connection", (socket) => {
-    console.log(socket + " connected");
-});
-
-/* io.on('message',(socket) =>
-    
-) */
-
-httpServer.listen(3000);
+server.listen(3000);
