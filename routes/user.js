@@ -344,6 +344,57 @@ function getUserImage(req, res) {
     });
 }
 
+function getUserByToken(req, res) {
+    const token = req.headers.authorization.split(' ')[1];
+    if (!token) {
+        return res.status(400).send({
+            error: 'Missing token.'
+        });
+    }
+    jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
+        if (err) {
+            return res.status(401).send({
+                error: 'Invalid token.'
+            });
+        }
+        const userId = decoded.userId;
+        if (!userId) {
+            return res.status(400).send({
+                error: 'Missing user id.'
+            });
+        }
+        mysql.getConnection((err, connection) => {
+            if (err) {
+                return res.status(500).send({
+                    error: err
+                });
+            }
+            connection.query(
+                'SELECT user_id, name, surname, email, department_id, is_adm, is_owner, position FROM User WHERE user_id = ?;',
+                [userId],
+                (err, results) => {
+                    connection.release();
+                    if (err) {
+                        console.log(err);
+                        return res.status(500).send({
+                            error: err
+                        });
+                    }
+
+                    if (results.length === 0) {
+                        return res.status(400).send({
+                            error: 'User not found.'
+                        });
+                    }
+
+                    return res.status(200).send({ response: 'User found.', data: results[0], token });
+                }
+            );
+        }
+        );
+    });
+}
+
 function userLogin(req, res) {
     const email = req.body.email;
     const password = req.body.password;
@@ -404,6 +455,7 @@ function userLogin(req, res) {
 
 router.post('/generate-code', generateCode); //this route will require admin authorization
 router.get('/validate-code', validateCode);
+router.get('/get-by-token', getUserByToken);
 router.post('/create', createUserFromCode);
 router.get('/get-user-data/:userId', userAuth, getUserData);
 router.put('/edit-user-data/:userId', userAuth, editUserData);
