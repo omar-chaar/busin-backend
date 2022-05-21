@@ -27,10 +27,9 @@ function createAnnouncement(req, res, next){
                         error: err
                     });
                 }
-                es.locals.announcementId = results.insertId;
-                console.log(results.insertId);
+                res.locals.announcementId = results.insertId;
                 connection.query(
-                    'SELECT company_id FROM Company INNER JOIN Department ON Department.company_id = Company.company_id INNER JOIN User ON Department.department_id = User.department_id WHERE User.user_id = ?;',
+                    'SELECT Company.company_id FROM Company INNER JOIN Department ON Department.company_id = Company.company_id INNER JOIN User ON Department.department_id = User.department_id WHERE User.user_id = ?;',
                     [senderId],
                     (err, results) => {
                         connection.release();
@@ -50,7 +49,7 @@ function createAnnouncement(req, res, next){
 
 function addAnnouncementReceivers(req, res){
     const announcementId = res.locals.announcementId;
-    const companyId = req.body.companyId;
+    const companyId = res.locals.companyId;
     mysql.getConnection((err, connection) => {
         if(err){
             return res.status(500).send({
@@ -58,16 +57,17 @@ function addAnnouncementReceivers(req, res){
             });
         }
         connection.query(
-            'INSERT INTO AnnouncementReceiver (announcement_id, receiver_id, has_seen) VALUES (?, (SELECT user_id FROM User INNER JOIN Department ON Department.department_id = User.department_id INNER JOIN Company ON Department.company_id = Company.company_id WHERE Company.company_id = ?), 0);',
+            'INSERT INTO AnnouncementReceiver (announcement_id, receiver_id, has_seen) SELECT ?, User.user_id, 0 FROM User INNER JOIN Department ON Department.department_id = User.department_id INNER JOIN Company ON Department.company_id = Company.company_id WHERE Company.company_id = ?;',
             [announcementId, companyId],
             (err, results) => {
                 connection.release();
                 if(err){
+                    console.log(err)
                     return res.status(500).send({
                         error: err
                     });
                 }
-                return res.status(200).send({response: 'AnnouncementReceiver created.', data: {id: results.insertId, announcementId: announcementId, receiverId: receiverId}});
+                return res.status(200).send({response: 'AnnouncementReceiver created.', data: {id: results.insertId, announcementId: announcementId}});
             }
         );
     });
