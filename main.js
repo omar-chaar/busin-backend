@@ -36,6 +36,7 @@ const departmentRoute = require('./routes/department')
 const announcementRoute = require('./routes/announcement')
 const messagesRoute = require('./routes/messages')
 const scheduleRoute = require('./routes/schedule')
+const companyRouter = require('./routes/company')
 
 app.use('/user', userRoute);
 app.use('/department', departmentRoute);
