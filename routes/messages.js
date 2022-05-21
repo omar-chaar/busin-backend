@@ -22,7 +22,7 @@ function getMessageForUser(req, res) {
                 });
             }
             connection.query(
-                'SELECT * FROM Message WHERE receiver_id = ? AND message_id IS NOT IN (SELECT parent_message_id FROM Message)  ORDER BY time DESC LIMIT 10;',
+                'SELECT * FROM Message WHERE (receiver_id = ? OR sender_id = ?) AND message_id IS NOT IN (SELECT parent_message_id FROM Message)  ORDER BY time DESC LIMIT 10;',
                 [userId],
                 (err, results) => {
                     connection.release();
@@ -47,7 +47,7 @@ function getMessageForUser(req, res) {
             }
             connection.query(
                 //get time from lastMessageId and check next 10 messages
-                'SELECT * FROM Message WHERE receiver_id = ? AND time < (SELECT time FROM Message WHERE message_id = ?) ORDER BY id DESC LIMIT 10;',
+                'SELECT * FROM Message WHERE (receiver_id = ? OR sender_id = ?) AND time < (SELECT time FROM Message WHERE message_id = ?) ORDER BY id DESC LIMIT 10;',
                 [userId, lastMessageId],
                 (err, results) => {
                     connection.release();

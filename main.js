@@ -4,6 +4,8 @@ const path = require('path');
 const cors = require('cors');
 const morgan = require('morgan')
 
+
+
 app.use(morgan('dev'))
 app.use(express.urlencoded({extended: true}));
 app.use(express.json());
@@ -32,10 +34,14 @@ app.use((req, res, next) => {
 const userRoute = require('./routes/user');
 const departmentRoute = require('./routes/department')
 const announcementRoute = require('./routes/announcement')
+const messagesRoute = require('./routes/messages')
+const scheduleRoute = require('./routes/schedule')
 
 app.use('/user', userRoute);
 app.use('/department', departmentRoute);
 app.use('/announcement', announcementRoute);
+app.use('/schedule', scheduleRoute);
+app.use('/messages', messagesRoute);
 //app.use('/uploads', express.static(path.join(__dirname, '/uploads')))
 
 app.use((req, res, next) => {
