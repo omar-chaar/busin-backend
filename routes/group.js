@@ -102,9 +102,46 @@ function getGroupCreationDate(req,res){
     });
 }
 
+//add user to group
+function addUserToGroup(req,res){
+    const groupId = req.body.groupId;
+    const userId = req.body.userId;
+
+    if(!groupId || !userId){
+        return res.status(400).send({
+            error: 'Missing group id or user id.'
+        });
+    }
+
+    mysql.getConnection((err, connection) => {
+        if(err){ 
+            return res.status(500).send({
+                error: err
+            });
+        }
+        connection.query(
+            'INSERT INTO GroupParticipant (group_id, user_id) VALUES (?, ?);',
+            [groupId, userId],
+            (err, results) => {
+                connection.release();
+                if(err){
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
+
+                return res.status(200).send({response: 'User added to group.'});
+            }
+        );
+    });
+}
+
+
 router.get('/name/:id', getGroupName);
 router.get('/participants/:id', getGroupParticipants);
 router.get('/creation_date/:id', getGroupCreationDate);
+router.post('/add_user', addUserToGroup);
+
 
 
 module.exports = router;
