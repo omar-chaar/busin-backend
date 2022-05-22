@@ -24,13 +24,8 @@ function getMessageForUser(req, res) {
                 });
             }
             connection.query(
-                'SELECT m.message_body, m.message_id, m.sender_id, m.receiver_id, m.time, m.was_seen, m.parent_message_id, u.name, ' +
-                'u.surname, u.department_id, u.user_id, u.email, u.position, u.is_adm, u.is_owner ' +
-                'FROM Message as m INNER JOIN User as u ON u.user_id = m.sender_id ' +
-                'WHERE (receiver_id = ? OR sender_id = ?) AND message_id NOT IN ' +
-                '(SELECT parent_message_id FROM Message WHERE NOT NULL) ORDER BY time DESC LIMIT 10;' +
-                '',
-                [userId, userId],
+                "SELECT * from Message INNER JOIN User ON receiver_id = user_id OR sender_id = user_id where message_id not in (SELECT parent_message_id FROM Message WHERE parent_message_id is not null) and (receiver_id = ? OR sender_id = ?) and user_id != ?;"
+                [userId, userId, userId],
                 (err, results) => {
                     connection.release();
                     if (err) {
