@@ -35,22 +35,24 @@ function getMessageForUser(req, res) {
                     }
 
                     console.log(results)
-                    const chats = {};
+                    const chats = [];
                     results.forEach(message => {
                         const chatId = message.sender_id + message.receiver_id;
-                        if (!chats[chatId]) {
-                            chats[chatId] = [];
-                            chats[chatId].push(message);
+                        const chat = {
+                            chatId: chatId,
+                            chatMessage: message.message_body,
+                            chatTime: message.time,
+                            chatSenderId: message.sender_id,
+                            chatReceiverId: message.receiver_id,
+                            chatParentMessageId: message.parent_message_id,
+                            chatWasSeen: message.was_seen,
+                            user: {
+                                name: message.name,
+                                surname: message.surname,
+                                profile_picture: message.profile_picture
+                            }
                         }
-                        else{
-                            chats[chatId].push(message);
-                        }
-                    });
-
-                    Object.values(chats).forEach(chat => {
-                        chat.sort((a, b) => {
-                            return new Date(a.time) - new Date(b.time);
-                        });
+                        chats.push(chat);
                     });
 
                     return res.status(200).send({
