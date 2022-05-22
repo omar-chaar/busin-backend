@@ -212,6 +212,41 @@ function wasSeen(req,res){
     });
 }
 
+function insertMessage(req, res) {
+    const message = req.body.message;
+    const senderId = req.body.senderId;
+    const receiverId = req.body.receiverId;
+
+    if (!message || !senderId || !receiverId) {
+        return res.status(400).send({
+            error: 'Missing message or senderId or receiverId.'
+        });
+    }
+   
+    mysql.getConnection((err, connection) => {
+        if (err) {
+            return res.status(500).send({
+                error: err
+            });
+        }
+        connection.query(
+            'INSERT INTO Message (sender_id, receiver_id, message_body, parent_message_id) SELECT ?, ?, ?, message_id FROM Message WHERE (sender_id = ? AND receiver_id = ?) or (sender_id = ? AND receiver_id = ?) ORDER BY time DESC LIMIT 1;',
+            [senderId, receiverId, message, senderId, receiverId, receiverId, senderId],
+            (err, results) => {
+                connection.release();
+                if (err) {
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
+                return res.status(200).send({
+                    messages: results
+                });
+            }
+        );
+    }
+    );
+} 
 
 
 
@@ -219,7 +254,7 @@ router.get('/get-messages/:userId', getMessageForUser);
 router.get('/groupmessages/:userId', getGroupMessageForUser);
 router.get('/parentmessage/:messageId', getParentMessage);
 router.put('/was-seen/:userId/:user2Id', wasSeen);
-// router.post('/insert-message', insertMessage);
+router.post('/insert-message', insertMessage);
 
 
 
