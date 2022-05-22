@@ -164,10 +164,38 @@ function getParentMessage(req, res) {
     }
     );
 }
+function wasSeen(req,res){
+    const userId = req.params.userId;
+    const user2Id = req.params.user2Id;
+    if (!userId || !user2Id) {
+        return res.status(400).send({ error: 'Missing userId.' });
+    }
+    mysql.getConnection((err, connection) => {
+        if (err) {
+            return res.status(500).send({ error: err });
+        }
+        connection.query(
+            'UPDATE Message SET was_seen = 1 WHERE (receiver_id = ? AND sender_id = ?) OR (receiver_id = ? AND sender_id = ?) AND was_seen = 0;',
+            [userId, user2Id, user2Id, userId],
+            (err, results) => {
+                connection.release();
+                if (err) {
+                    return res.status(500).send({ error: err });
+                }
+                return res.status(200).send({
+                    messages: results
+                });
+            });
+    });
+}
+
+
+
 
 router.get('/messages/:userId', getMessageForUser);
 router.get('/groupmessages/:userId', getGroupMessageForUser);
 router.get('/parentmessage/:messageId', getParentMessage);
+router.put('/was-seen/:userId/:user2Id', wasSeen);
 // router.post('/insert-message', insertMessage);
 
 
