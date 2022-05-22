@@ -158,6 +158,9 @@ function getGroupMessageForUser(req, res) {
 
 function getParentMessage(req, res) {
     const messageId = req.params.messageId;
+    const userId = req.body.userId;
+    const user2Id = req.body.user2Id;
+
     if (!messageId) {
         return res.status(400).send({
             error: 'Missing messageId.'
@@ -170,8 +173,9 @@ function getParentMessage(req, res) {
             });
         }
         connection.query(
-            'SELECT TOP * FROM Message WHERE message_id = (SELECT parent_message_id FROM Message WHERE message_id = ?) LIMIT 1;',
-            [messageId],
+             //get the next 10 messages using the time of last message id
+            'SELECT * FROM Message WHERE (receiver_id = ? AND sender_id = ?) or (receiver_id = ? AND sender_id = ?) and time < (SELECT time FROM Message WHERE message_id = ?) ORDER BY time DESC LIMIT 10;',
+            [userId, user2Id, user2Id, userId, messageId],          
             (err, results) => {
                 connection.release();
                 if (err) {
@@ -187,6 +191,7 @@ function getParentMessage(req, res) {
     }
     );
 }
+
 function wasSeen(req,res){
     const userId = req.params.userId;
     const user2Id = req.params.user2Id;
