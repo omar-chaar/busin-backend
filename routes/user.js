@@ -524,6 +524,41 @@ function getUsersByCompany(req, res) {
         );
     });
 }
+
+function setUserName(req, res) {
+    const userId = req.params.userId;
+    const name = req.body.name;
+    const surname = req.body.surname;
+    if (!userId || !name || !surname) {
+        return res.status(400).send({
+            error: 'Missing information.'
+        });
+    }
+    mysql.getConnection((err, connection) => {
+        if (err) {
+            return res.status(500).send({
+                error: err
+            });
+        }
+        connection.query(
+            'UPDATE User SET name = ?, surname = ? WHERE user_id = ?;',
+            [name, surname, userId],
+            (err, results) => {
+                connection.release();
+                if (err) {
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
+                return res.status(200).send({ response: 'User updated.' });
+            }
+        );
+    });
+}
+
+function deleteUser(req, res) {
+
+}
             
 
 router.post('/generate-code', generateCode); //this route will require admin authorization
@@ -539,5 +574,6 @@ router.get('/get-user-image/:userId', userAuth, getUserImage);
 router.post('/login', userLogin);
 router.get('/get-by-department/:departmentId', userAuth, getUsersByDepartment);
 router.get('/get-by-company/:companyId', userAuth, getUsersByCompany);
+router.put('/set-username/:userId', userAuth, setUserName);
 
 module.exports = router;
