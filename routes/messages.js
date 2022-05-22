@@ -226,7 +226,7 @@ function insertMessage(req, res) {
             });
         }
         connection.query(
-            'INSERT INTO Message (sender_id, receiver_id, message_body, parent_message_id) VALUES (?, ?, ?, (SELECT message_id FROM Message WHERE (sender_id = ? AND receiver_id = ?) or (sender_id = ? AND receiver_id = ?) ORDER BY time DESC LIMIT 1));',
+            'INSERT INTO Message (sender_id, receiver_id, message_body, parent_message_id) SELECT ?, ?, ?, message_id FROM Message WHERE (sender_id = ? AND receiver_id = ?) or (sender_id = ? AND receiver_id = ?) ORDER BY time DESC LIMIT 1;',
             [senderId, receiverId, message, senderId, receiverId, receiverId, senderId],
             (err, results) => {
                 connection.release();
