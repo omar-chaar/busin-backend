@@ -24,7 +24,7 @@ function getMessageForUser(req, res) {
                 });
             }
             connection.query(
-                "SELECT message_id, sender_id, receiver_id, time, message_body, parent_message_id, was_seen, name, surname, profile_picture from Message INNER JOIN User ON receiver_id = user_id OR sender_id = user_id where message_id not in (SELECT parent_message_id FROM Message WHERE parent_message_id is not null) and (receiver_id = ? OR sender_id = ?) and user_id != ? ORDER BY time DESC LIMIT 10;",
+                "SELECT message_id, sender_id, receiver_id, time, message_body, parent_message_id, was_seen, user_id, name, surname, profile_picture from Message INNER JOIN User ON receiver_id = user_id OR sender_id = user_id where message_id not in (SELECT parent_message_id FROM Message WHERE parent_message_id is not null) and (receiver_id = ? OR sender_id = ?) and user_id != ? ORDER BY time DESC LIMIT 10;",
                 [userId, userId, userId],
                 (err, results) => {
                     connection.release();
@@ -35,22 +35,26 @@ function getMessageForUser(req, res) {
                     }
 
                     console.log(results)
-                    const chats = {};
+                    const chats = [];
                     results.forEach(message => {
                         const chatId = message.sender_id + message.receiver_id;
-                        if (!chats[chatId]) {
-                            chats[chatId] = [];
-                            chats[chatId].push(message);
+                        const chat = {
+                            chatId: chatId,
+                            chatMessageId: message.message_id,
+                            chatMessage: message.message_body,
+                            chatTime: message.time,
+                            chatSenderId: message.sender_id,
+                            chatReceiverId: message.receiver_id,
+                            chatParentMessageId: message.parent_message_id,
+                            chatWasSeen: message.was_seen,
+                            user: {
+                                id: message.user_id,
+                                name: message.name,
+                                surname: message.surname,
+                                profile_picture: message.profile_picture
+                            }
                         }
-                        else{
-                            chats[chatId].push(message);
-                        }
-                    });
-
-                    Object.values(chats).forEach(chat => {
-                        chat.sort((a, b) => {
-                            return new Date(a.time) - new Date(b.time);
-                        });
+                        chats.push(chat);
                     });
 
                     return res.status(200).send({
