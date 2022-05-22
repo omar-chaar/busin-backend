@@ -24,7 +24,7 @@ function getMessageForUser(req, res) {
                 });
             }
             connection.query(
-                "SELECT * from Message INNER JOIN User ON receiver_id = user_id OR sender_id = user_id where message_id not in (SELECT parent_message_id FROM Message WHERE parent_message_id is not null) and (receiver_id = ? OR sender_id = ?) and user_id != ?;"
+                "SELECT message_id, sender_id, receiver_id, time, message_body, parent_message_id, was_seen, name, surname, profile_picture from Message INNER JOIN User ON receiver_id = user_id OR sender_id = user_id where message_id not in (SELECT parent_message_id FROM Message WHERE parent_message_id is not null) and (receiver_id = ? OR sender_id = ?) and user_id != ?;",
                 [userId, userId, userId],
                 (err, results) => {
                     connection.release();
