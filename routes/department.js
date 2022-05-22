@@ -2,6 +2,8 @@ const express = require('express')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt');
 const { route } = require('./user');
+const userAuthorization = require('../middlewares/userAuthorization');
+const adminAuthorization = require('../middlewares/adminAuthorization');
 const router = express.Router()
 const mysql = require('../lib/mysql').pool
 
@@ -11,6 +13,8 @@ function createDepartment(req, res){
     const name = req.body.name;
     const companyId = req.body.companyId;
 
+    console.log(name)
+    console.log(companyId)
     if(!name || !companyId){
         return res.status(400).send({
             error: 'Missing information.'
@@ -35,14 +39,14 @@ function createDepartment(req, res){
                     });
                 }
 
-                return res.status(200).send({response: 'Department created.', data: {id: results.insertId, departmentName: name, companyId: companyId}});
+                return res.status(200).send({response: 'Department created.', data: {id: results.insertId, name: name, companyId: companyId}});
             }
         );
     });
 }
 
 function updateDepartment(req, res){
-    const id = req.body.id;
+    const id = req.body.department_id;
     const name = req.body.name;
 
     if(!id || !name){
@@ -139,7 +143,7 @@ function getDepartment(req, res){
 }
 
 function getAllDepartments(req, res){
-    const companyId = req.param.companyId;
+    const companyId = req.params.id;
     mysql.getConnection((err, connection) => {
         if(err){
             return res.status(500).send({
@@ -156,7 +160,6 @@ function getAllDepartments(req, res){
                         error: err
                     });
                 }
-
                 return res.status(200).send({response: 'Departments found.', data: results});
             }
         );
@@ -190,11 +193,11 @@ function getAllUsersByDepartment(req, res){
 
 //routes
 
-router.post('/create', createDepartment);
-router.put('/update', updateDepartment);
-router.delete('/delete', deleteDepartment);
-router.get('/get-name/:departmentId', getDepartment);
-router.get('/get-departments/:companyId', getAllDepartments);
-router.get('/get-users/:departmentId',getAllUsersByDepartment);
+router.post('/create', adminAuthorization, createDepartment);
+router.put('/update', adminAuthorization, updateDepartment);
+router.delete('/delete', adminAuthorization, deleteDepartment);
+router.get('/get-name/:departmentId', userAuthorization, getDepartment);
+router.get('/get-departments/:id', userAuthorization, getAllDepartments);
+router.get('/get-users/:departmentId', userAuthorization,getAllUsersByDepartment);
 
 module.exports = router;

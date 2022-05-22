@@ -15,7 +15,10 @@ function generateCode(req, res) {
     const surname = req.body.surname;
     const admin = req.body.admin || false;
 
+    console.log(req.body)
+
     if (!departmentId || !position || !name || !surname) {
+        console.log('?')
         return res.status(400).send({
             error: 'Missing information.'
         });
@@ -159,7 +162,6 @@ function getUserData(req, res) {
         );
     });
 }
-//routes
 
 function editUserData(req, res) {
     const userId = req.params.userId;
@@ -453,6 +455,77 @@ function userLogin(req, res) {
 
 }
 
+//get user by department id
+function getUsersByDepartment(req, res) {
+    const departmentId = req.params.departmentId;
+    if (!departmentId) {
+        return res.status(400).send({
+            error: 'Missing department id.'
+        });
+    }
+    mysql.getConnection((err, connection) => {
+        if (err) {
+            return res.status(500).send({
+                error: err
+            });
+        }
+        connection.query(
+            'SELECT user_id, name, surname, email, department_id, is_adm, is_owner, position FROM User WHERE department_id = ?;',
+            [departmentId],
+            (err, results) => {
+                connection.release();
+                if (err) {
+                    return res.status(500).send({
+                        error: err
+                    })
+                }
+                if (results.length === 0) {
+                    return res.status(400).send({
+                        error: 'Users not found.'
+                    });
+                }
+                return res.status(200).send({ response: 'Users found.', data: results });
+            }
+        );
+    });
+}
+
+function getUsersByCompany(req, res) {
+    const companyId = req.params.companyId;
+    if (!companyId) {
+        return res.status(400).send({
+            error: 'Missing company id.'
+        });
+    }
+    mysql.getConnection((err, connection) => {
+        if (err) {
+            return res.status(500).send({
+                error: err
+            });
+        }
+        connection.query(
+            'SELECT user_id, User.name, surname, position, email, profile_picture, User.department_id, is_adm, is_owner FROM User '+ 
+            'INNER JOIN Department ON User.department_id = Department.department_id WHERE Department.company_id = ?;',
+            [companyId],
+            (err, results) => {
+                connection.release();
+                if (err) {
+                    return res.status(500).send({
+                        error: err
+                    })
+                }
+                if (results.length === 0) {
+                    return res.status(400).send({
+                        error: 'Users not found.'
+                    });
+                }
+                return res.status(200).send(results);
+            }
+        );
+    });
+}
+            
+
 router.post('/generate-code', generateCode); //this route will require admin authorization
 router.get('/validate-code', validateCode);
 router.get('/get-by-token', getUserByToken);
@@ -464,5 +537,7 @@ router.put('/edit-user-password/:userId', userAuth, editUserPassword);
 router.put('/update-user-image/:userId', userAuth, updateUserImage);
 router.get('/get-user-image/:userId', userAuth, getUserImage);
 router.post('/login', userLogin);
+router.get('/get-by-department/:departmentId', userAuth, getUsersByDepartment);
+router.get('/get-by-company/:companyId', userAuth, getUsersByCompany);
 
 module.exports = router;

@@ -6,8 +6,8 @@ module.exports = (req, res, next) => {
         const decode = jwt.verify(token, process.env.JWT_KEY)
         req.user = decode
         if(req.user.adm) return next()
-        return res.status(401).send({response: 'Forbidden.'})
+        return res.status(401).send({error: 'Forbidden.'})
     }catch(erro){
-        return res.status(401).send({response: 'Forbidden.'})
+        return res.status(401).send({error: 'Forbidden.'})
     }
 }

@@ -94,7 +94,7 @@ function createCompany(req, res){
 //get all company information 
 function getCompany(req, res){
     const companyId = req.params.companyId;
-    if (!companyName) {
+    if (!companyId) {
         return res.status(400).send({
             error: 'Missing Company Id.'
         });
@@ -122,8 +122,9 @@ function getCompany(req, res){
         );
     });
 }
+
 function getCompanyByDepartment(req, res){
-    const departmentId = req.params.departmentId;
+    const departmentId = req.params.id;
     if (!departmentId) {
         return res.status(400).send({
             error: 'Missing Department Id.'
@@ -156,7 +157,7 @@ function getCompanyByDepartment(req, res){
 
 
 router.get('/get/:id', getCompany);
-router.get('/get/department/:id', getCompanyByDepartment);
+router.get('/get-department/:id', getCompanyByDepartment);
 router.post('/create', createCompany);
 
 
