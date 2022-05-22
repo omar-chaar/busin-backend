@@ -106,7 +106,7 @@ function getGroupMessageForUser(req, res) {
                 });
             }
             connection.query(
-                'SELECT * FROM GroupMessage WHERE group_id IN (SELECT group_id FROM GroupParticipant WHERE user_id = ?) AND group_message_id NOT IN (SELECT parent_message_id FROM GroupMessage WHERE NOT NULL)  ORDER BY time DESC LIMIT 10;',
+                'SELECT * FROM GroupMessage WHERE group_id IN (SELECT group_id FROM GroupParticipant WHERE user_id = ?) AND group_message_id NOT IN (SELECT parent_message_id FROM GroupMessage WHERE IS NOT NULL)  ORDER BY time DESC LIMIT 10;',
                 [userId],
                 (err, results) => {
                     connection.release();
