@@ -24,18 +24,42 @@ function getMessageForUser(req, res) {
                 });
             }
             connection.query(
-                'SELECT * FROM Message WHERE (receiver_id = ? OR sender_id = ?) AND message_id NOT IN (SELECT parent_message_id FROM Message WHERE NOT NULL) ORDER BY time DESC LIMIT 10;',
+                'SELECT m.message_body, m.message_id, m.sender_id, m.receiver_id, m.time, m.was_seen, m.parent_message_id, u.name, ' +
+                'u.surname, u.department_id, u.user_id, u.email, u.position, u.is_adm, u.is_owner ' +
+                'FROM Message as m INNER JOIN User as u ON u.user_id = m.sender_id ' +
+                'WHERE (receiver_id = ? OR sender_id = ?) AND message_id NOT IN ' +
+                '(SELECT parent_message_id FROM Message WHERE NOT NULL) ORDER BY time DESC LIMIT 10;' +
+                '',
                 [userId, userId],
                 (err, results) => {
                     connection.release();
                     if (err) {
-                        console.log(err)
                         return res.status(500).send({
                             error: err
                         });
                     }
+
+                    console.log(results)
+                    const chats = {};
+                    results.forEach(message => {
+                        const chatId = message.sender_id + message.receiver_id;
+                        if (!chats[chatId]) {
+                            chats[chatId] = [];
+                            chats[chatId].push(message);
+                        }
+                        else{
+                            chats[chatId].push(message);
+                        }
+                    });
+
+                    Object.values(chats).forEach(chat => {
+                        chat.sort((a, b) => {
+                            return new Date(a.time) - new Date(b.time);
+                        });
+                    });
+
                     return res.status(200).send({
-                        messages: results
+                        messages: chats
                     });
                 }
             );
@@ -165,7 +189,7 @@ function getParentMessage(req, res) {
     );
 }
 
-router.get('/messages/:userId', getMessageForUser);
+router.get('/get-messages/:userId', getMessageForUser);
 router.get('/groupmessages/:userId', getGroupMessageForUser);
 router.get('/parentmessage/:messageId', getParentMessage);
 // router.post('/insert-message', insertMessage);
