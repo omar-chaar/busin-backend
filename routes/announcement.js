@@ -86,7 +86,7 @@ function getAllAnnouncementsForUser (req, res){
             });
         }
         connection.query(
-            'SELECT * FROM Announcement INNER JOIN AnnouncementReceiver where Announcement.announcement_id = AnnouncementReceiver.announcement_id AND receiver_id = ?;', [userId],
+            'SELECT * FROM Announcement INNER JOIN AnnouncementReceiver where Announcement.announcement_id = AnnouncementReceiver.announcement_id AND receiver_id = ? ORDER BY time ASC;', [userId],
             (err, results) => {
                 connection.release();
                 if(err){

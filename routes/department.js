@@ -110,7 +110,7 @@ function deleteDepartment(req, res){
     });
 }
 
-function getDepartment(req, res){
+function getDepartmentName(req, res){
     const id = req.body.id;
 
     if(!id){
@@ -126,7 +126,7 @@ function getDepartment(req, res){
             });
         }
         connection.query(
-            'SELECT department_id, name FROM Department WHERE department_id = ?;',
+            'SELECT name FROM Department WHERE department_id = ?;',
             [id],
             (err, results) => {
                 connection.release();
@@ -190,14 +190,41 @@ function getAllUsersByDepartment(req, res){
     });
 }
 
+function getDepartmentById(req, res){
+    const id = req.params.id;
+    mysql.getConnection((err, connection) => {
+        if(err){
+            return res.status(500).send({
+                error: err
+            });
+        }
+        connection.query(
+            'SELECT * FROM Department WHERE department_id = ?;',
+            [id],
+            (err, results) => {
+                connection.release();
+                if(err){
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
+
+                return res.status(200).send({response: 'Department found.', data: results[0]});
+            }
+        );
+    });
+}
+
+
 
 //routes
 
 router.post('/create', adminAuthorization, createDepartment);
 router.put('/update', adminAuthorization, updateDepartment);
 router.delete('/delete', adminAuthorization, deleteDepartment);
-router.get('/get-name/:departmentId', userAuthorization, getDepartment);
+router.get('/get-name/:departmentId', userAuthorization, getDepartmentName);
 router.get('/get-departments/:id', userAuthorization, getAllDepartments);
 router.get('/get-users/:departmentId', userAuthorization,getAllUsersByDepartment);
+router.get('/get-department/:id', userAuthorization, getDepartmentById);
 
 module.exports = router;
