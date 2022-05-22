@@ -24,7 +24,7 @@ function getMessageForUser(req, res) {
                 });
             }
             connection.query(
-                "SELECT message_id, sender_id, receiver_id, time, message_body, parent_message_id, was_seen, name, surname, profile_picture from Message INNER JOIN User ON receiver_id = user_id OR sender_id = user_id where message_id not in (SELECT parent_message_id FROM Message WHERE parent_message_id is not null) and (receiver_id = ? OR sender_id = ?) and user_id != ?;",
+                "SELECT message_id, sender_id, receiver_id, time, message_body, parent_message_id, was_seen, name, surname, profile_picture from Message INNER JOIN User ON receiver_id = user_id OR sender_id = user_id where message_id not in (SELECT parent_message_id FROM Message WHERE parent_message_id is not null) and (receiver_id = ? OR sender_id = ?) and user_id != ? ORDER BY time DESC LIMIT 10;",
                 [userId, userId, userId],
                 (err, results) => {
                     connection.release();
@@ -69,8 +69,8 @@ function getMessageForUser(req, res) {
             }
             connection.query(
                 //get time from lastMessageId and check next 10 messages
-                'SELECT * FROM Message WHERE (receiver_id = ? OR sender_id = ?) AND time < (SELECT time FROM Message WHERE message_id = ?) ORDER BY id DESC LIMIT 10;',
-                [userId, userId, lastMessageId],
+                'SELECT message_id, sender_id, receiver_id, time, message_body, parent_message_id, was_seen, name, surname, profile_picture from Message INNER JOIN User ON receiver_id = user_id OR sender_id = user_id where message_id not in (SELECT parent_message_id FROM Message WHERE parent_message_id is not null) AND time < (SELECT time FROM Message WHERE message_id = ?) and (receiver_id = ? OR sender_id = ?) and user_id != ? ORDER BY time DESC LIMIT 10;',
+                [lastMessageId, userId, userId, userId],
                 (err, results) => {
                     connection.release();
                     if (err) {
