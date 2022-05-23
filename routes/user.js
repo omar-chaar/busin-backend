@@ -141,7 +141,7 @@ function getUserData(req, res) {
             });
         }
         connection.query(
-            'SELECT name, surname, department_id, position, is_adm, is_owner FROM User WHERE user_id = ?;',
+            'SELECT user_id, name, surname, department_id, position, is_adm, is_owner FROM User WHERE user_id = ?;',
             [userId],
             (err, results) => {
                 connection.release();

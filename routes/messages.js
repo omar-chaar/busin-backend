@@ -2,6 +2,7 @@ const express = require('express')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt');
 const { request } = require('../main');
+const userAuthorization = require('../middlewares/userAuthorization');
 const router = express.Router()
 const mysql = require('../lib/mysql').pool
 
@@ -54,6 +55,7 @@ function getMessageForUser(req, res) {
                                 profile_picture: message.profile_picture
                             }
                         }
+                        if(!chats.find(chat => chat.chatId === chatId))
                         chats.push(chat);
                     });
 
@@ -158,8 +160,8 @@ function getGroupMessageForUser(req, res) {
 
 function getParentMessage(req, res) {
     const messageId = req.params.messageId;
-    const userId = req.body.userId;
-    const user2Id = req.body.user2Id;
+    const userId = req.query.userId;
+    const user2Id = req.query.user2Id;
 
     if (!messageId) {
         return res.status(400).send({
@@ -183,6 +185,7 @@ function getParentMessage(req, res) {
                         error: err
                     });
                 }
+                console.log(results)
                 return res.status(200).send({
                     messages: results
                 });
@@ -203,8 +206,33 @@ function wasSeen(req,res){
             return res.status(500).send({ error: err });
         }
         connection.query(
-            'UPDATE Message SET was_seen = 1 WHERE (receiver_id = ? AND sender_id = ?) OR (receiver_id = ? AND sender_id = ?) AND was_seen = 0;',
-            [userId, user2Id, user2Id, userId],
+            'UPDATE Message SET was_seen = 1 WHERE (receiver_id = ? AND sender_id = ?) OR (sender_id = ? AND receiver_id = ?) AND was_seen = false;',
+            [userId, user2Id, userId, user2Id],
+            (err, results) => {
+                connection.release();
+                if (err) {
+                    return res.status(500).send({ error: err });
+                }
+                return res.status(200).send({
+                    messages: results
+                });
+            });
+    });
+}
+
+function Unseen(req,res){
+    const userId = req.params.userId;
+    const user2Id = req.params.user2Id;
+    if (!userId || !user2Id) {
+        return res.status(400).send({ error: 'Missing userId.' });
+    }
+    mysql.getConnection((err, connection) => {
+        if (err) {
+            return res.status(500).send({ error: err });
+        }
+        connection.query(
+            'UPDATE Message SET was_seen = TRUE WHERE (sender_id = ? AND receiver_id = ?);',
+            [userId, user2Id],
             (err, results) => {
                 connection.release();
                 if (err) {
@@ -221,6 +249,7 @@ function insertMessage(req, res) {
     const message = req.body.message;
     const senderId = req.body.senderId;
     const receiverId = req.body.receiverId;
+    const parentId= req.body.parentId;
 
     if (!message || !senderId || !receiverId) {
         return res.status(400).send({
@@ -235,8 +264,8 @@ function insertMessage(req, res) {
             });
         }
         connection.query(
-            'INSERT INTO Message (sender_id, receiver_id, message_body, parent_message_id) SELECT ?, ?, ?, message_id FROM Message WHERE (sender_id = ? AND receiver_id = ?) or (sender_id = ? AND receiver_id = ?) ORDER BY time DESC LIMIT 1;',
-            [senderId, receiverId, message, senderId, receiverId, receiverId, senderId],
+            'INSERT INTO Message (message_body, sender_id, receiver_id, time, parent_message_id) VALUES (?, ?, ?, NOW(), ?);',
+            [message, senderId, receiverId, parentId],
             (err, results) => {
                 connection.release();
                 if (err) {
@@ -245,21 +274,61 @@ function insertMessage(req, res) {
                     });
                 }
                 return res.status(200).send({
+                    response: results.insertId
+                });
+            }
+        );
+    }
+    );
+}
+
+//get first 10 messages
+function getMessages(req, res) {
+    const userId = req.params.userId;
+    const user2Id = req.params.user2Id;
+    if (!userId || !user2Id) {
+        return res.status(400).send({
+            error: 'Missing userId or user2Id.'
+        });
+    }
+    mysql.getConnection((err, connection) => {
+        if (err) {
+            return res.status(500).send({
+                error: err
+            });
+        }
+        connection.query(
+            'SELECT * FROM Message WHERE (receiver_id = ? AND sender_id = ?) or (receiver_id = ? AND sender_id = ?) ORDER BY time DESC LIMIT 10;',
+            [userId, user2Id, user2Id, userId],
+            (err, results) => {
+                connection.release();
+                if (err) {
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
+
+                //order result by time and invert it
+                results.reverse();
+
+                return res.status(200).send({
                     messages: results
                 });
             }
         );
     }
     );
-} 
+}
 
 
 
 router.get('/get-messages/:userId', getMessageForUser);
 router.get('/groupmessages/:userId', getGroupMessageForUser);
-router.get('/parentmessage/:messageId', getParentMessage);
-router.put('/was-seen/:userId/:user2Id', wasSeen);
-router.post('/insert-message', insertMessage);
+router.get('/parentmessage/:messageId', userAuthorization, getParentMessage);
+router.put('/was-seen/:userId/:user2Id', userAuthorization, wasSeen);
+router.put('/unseen/:userId/:user2Id', userAuthorization, Unseen);
+router.post('/insert-message', userAuthorization, insertMessage);
+router.get('/get-messages/:userId/:user2Id', userAuthorization, getMessages);
 
 
 
