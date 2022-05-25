@@ -231,8 +231,8 @@ function Unseen(req,res){
             return res.status(500).send({ error: err });
         }
         connection.query(
-            'UPDATE Message SET was_seen = TRUE WHERE (sender_id = ? AND receiver_id = ?);',
-            [userId, user2Id],
+            'UPDATE Message SET was_seen = TRUE WHERE (sender_id = ? AND receiver_id = ?) OR (receiver_id = ? AND sender_id = ?) AND was_seen = false;',);
+            [userId, user2Id, userId, user2Id],
             (err, results) => {
                 connection.release();
                 if (err) {
@@ -320,8 +320,41 @@ function getMessages(req, res) {
     );
 }
 
+//get number of unreads
+function getUnread(req, res) {
+    const userId = req.params.userId;
+    const user2Id = req.params.user2Id;
+    if (!userId || !user2Id) {
+        return res.status(400).send({
+            error: 'Missing userId or user2Id.'
+        });
+    }
+    mysql.getConnection((err, connection) => {
+        if (err) {
+            return res.status(500).send({
+                error: err
+            });
+        }
+        connection.query(
+            'SELECT COUNT(*) AS unread FROM Message WHERE (receiver_id = ? AND sender_id = ?) AND was_seen = false AND receiver_id = ?;',
+            [userId, user2Id, userId],
+            (err, results) => {
+                connection.release();
+                if (err) {
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
+                return res.status(200).send({
+                    unread: results[0].unread
+                });
+            }
+        );
+    }
+    );
+}
 
-
+router.get('get-unread/:userId/:user2Id', getUnread);
 router.get('/get-messages/:userId', getMessageForUser);
 router.get('/groupmessages/:userId', getGroupMessageForUser);
 router.get('/parentmessage/:messageId', userAuthorization, getParentMessage);
