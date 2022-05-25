@@ -170,10 +170,8 @@ function getNextTenAnnouncementsForUser(req, res) {
 
 
 router.post("/create", adminAuth, createAnnouncement, addAnnouncementReceivers);
-router.get(
-    "/get-all-announcements-for-user/:userId",
-    userAuth,
-    getAllAnnouncementsForUser
-);
+router.get("/get-all-announcements-for-user/:userId", userAuth, getAllAnnouncementsForUser);
+router.get("/get-first-ten-announcements-for-user/:userId", userAuth, getFirstTenAnnouncementsForUser);
+router.get("/get-next-ten-announcements-for-user/:userId", userAuth, getNextTenAnnouncementsForUser);
 
 module.exports = router;
