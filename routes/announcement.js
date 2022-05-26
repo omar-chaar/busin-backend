@@ -169,8 +169,34 @@ function getNextTenAnnouncementsForUser(req, res) {
     }); //end of mysql.getConnection
 } //end of getNextTenAnnouncementsForUser
 
+function deleteAnnouncement(req, res){
+    const announcementId = req.params.announcementId;
+    mysql.getConnection((err, connection) => {
+        if (err) {
+            return res.status(500).send({
+                error: err,
+            });
+        }
+        connection.query(
+            "DELETE FROM Announcement INNER JOIN AnnouncementReceiver WHERE Announcement.announcement_id = AnnouncementReceiver.announcement_id AND Announcement.announcement_id = ?;",
+            [announcementId],
+            (err, results) => {
+                connection.release();
+                if (err) {
+                    return res.status(500).send({
+                        error: err,
+                    });
+                }
+                return res.status(200).send({
+                    response: "Announcement deleted.",
+                });
+            }
+        ); //end of query
+    }); //end of mysql.getConnection
+} //end of deleteAnnouncement
 
 
+router.delete("/delete/:announcementId", adminAuth, deleteAnnouncement);
 router.post("/create", adminAuth, createAnnouncement, addAnnouncementReceivers);
 router.get("/get-all-announcements-for-user/:userId", userAuth, getAllAnnouncementsForUser);
 router.get("/get-first-ten-announcements-for-user/:userId", userAuth, getFirstTenAnnouncementsForUser);
