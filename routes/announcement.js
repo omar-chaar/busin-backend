@@ -92,7 +92,7 @@ function getAllAnnouncementsForUser(req, res) {
             });
         }
         connection.query(
-            "SELECT * FROM Announcement INNER JOIN AnnouncementReceiver where Announcement.announcement_id = AnnouncementReceiver.announcement_id AND receiver_id = ? ORDER BY time ASC;",
+            "SELECT * FROM Announcement INNER JOIN AnnouncementReceiver ON Announcement.announcement_id = AnnouncementReceiver.announcement_id AND receiver_id = ? ORDER BY time ASC;",
             [userId],
             (err, results) => {
                 connection.release();
@@ -120,7 +120,7 @@ function getFirstTenAnnouncementsForUser(req, res) {
             });
         }
         connection.query(
-            "SELECT * FROM Announcement INNER JOIN AnnouncementReceiver where Announcement.announcement_id = AnnouncementReceiver.announcement_id AND receiver_id = ? ORDER BY time DESC LIMIT 10;",
+            "SELECT * FROM Announcement INNER JOIN AnnouncementReceiver on Announcement.announcement_id = AnnouncementReceiver.announcement_id AND receiver_id = ? ORDER BY time DESC LIMIT 10;",
             [userId],
             (err, results) => {
                 connection.release();
@@ -178,7 +178,7 @@ function deleteAnnouncement(req, res){
             });
         }
         connection.query(
-            "DELETE FROM Announcement INNER JOIN AnnouncementReceiver WHERE Announcement.announcement_id = AnnouncementReceiver.announcement_id AND Announcement.announcement_id = ?;",
+            "DELETE FROM AnnouncementReceiver WHERE Announcement_id = ?;",
             [announcementId],
             (err, results) => {
                 connection.release();
@@ -187,9 +187,24 @@ function deleteAnnouncement(req, res){
                         error: err,
                     });
                 }
-                return res.status(200).send({
-                    response: "Announcement deleted.",
-                });
+                connection.query(
+                    "DELETE FROM Announcement WHERE announcement_id = ?;",
+                    [announcementId],
+                    (err, results) => {
+                        connection.release();
+                        if (err) {
+                            return res.status(500).send({
+                                error: err,
+                            });
+                        }
+                        return res.status(200).send({
+                            response: "Announcement deleted.",
+                            data: {
+                                id: announcementId,
+                            },
+                        });//end of return
+                    }
+                )//end of inner query
             }
         ); //end of query
     }); //end of mysql.getConnection
