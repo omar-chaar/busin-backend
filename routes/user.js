@@ -480,7 +480,7 @@ function getUsersByDepartment(req, res) {
                     })
                 }
                 if (results.length === 0) {
-                    return res.status(400).send({
+                    return res.status(204).send({
                         error: 'Users not found.'
                     });
                 }
