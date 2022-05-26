@@ -67,6 +67,17 @@ function updateDepartment(req, res){
             (err, results) => {
                 connection.release();
                 if(err){
+                    connection.query(
+                        'SELECT * FROM Department WHERE department_id = ?;',
+                        [id],
+                        (err, results) => {
+                            connection.release();
+                            if(err){
+                                return res.status(500).send({
+                                    error: err
+                                });
+                            }
+                        });
                     return res.status(500).send({
                         error: err
                     });
@@ -182,6 +193,9 @@ function getAllUsersByDepartment(req, res){
                     return res.status(500).send({
                         error: err
                     });
+                }
+                if(results.length == 0){
+                    return res.status(204).send({response: 'No users found.'});
                 }
 
                 return res.status(200).send({response: 'Users found.', data: results});
