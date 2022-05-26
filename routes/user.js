@@ -557,9 +557,78 @@ function setUserName(req, res) {
 }
 
 function deleteUser(req, res) {
-
+    const userId = req.params.userId;
+    if (!userId) {
+        return res.status(400).send({
+            error: 'Missing user id.'
+        });
+    }
+    mysql.getConnection((err, connection) => {
+        if (err) {
+            return res.status(500).send({
+                error: err
+            });
+        }        
+        connection.query(
+            'DELETE FROM AnnouncementReceiver WHERE user_id = ?;',
+            [userId],
+            (err, results) => {
+                if (err) {
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
+                connection.query(
+                    'DELETE FROM Announcement WHERE sender_id = ?;',
+                    [userId],
+                    (err, results) => {
+                        if (err) {
+                            return res.status(500).send({
+                                error: err
+                            });
+                        }
+                        connection.query(
+                            'DELETE FROM Messages WHERE sender_id = ? OR receiver_id = ?;',
+                            [userId, userId],
+                            (err, results) => {
+                                if (err) {
+                                    return res.status(500).send({
+                                        error: err
+                                    });
+                                }
+                                connection.query(
+                                    'DELETE FROM Schedule where user_id = ?;',
+                                    [userId],
+                                    (err, results) => {
+                                        if (err) {
+                                            return res.status(500).send({
+                                                error: err
+                                            });
+                                        }
+                                        connection.query(
+                                            'DELETE FROM User WHERE user_id = ?;',
+                                            [userId],
+                                            (err, results) => {
+                                                connection.release();
+                                                if (err) {
+                                                    return res.status(500).send({
+                                                        error: err
+                                                    });
+                                                }
+                                                return res.status(200).send({ response: 'User deleted.' });
+                                            }
+                                        );
+                                    }
+                                );
+                            }
+                        );
+                    }
+                );
+            }
+        );
+    });
 }
-            
+         
 
 router.post('/generate-code', generateCode); //this route will require admin authorization
 router.get('/validate-code', validateCode);
@@ -575,5 +644,6 @@ router.post('/login', userLogin);
 router.get('/get-by-department/:departmentId', userAuth, getUsersByDepartment);
 router.get('/get-by-company/:companyId', userAuth, getUsersByCompany);
 router.put('/set-username/:userId', userAuth, setUserName);
+router.delete('/delete/:userId', adminAuth, deleteUser);
 
 module.exports = router;
