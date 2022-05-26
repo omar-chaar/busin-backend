@@ -158,10 +158,12 @@ function getNextTenAnnouncementsForUser(req, res) {
                         error: err,
                     });
                 }
+                console.log(userId + " " + announcementId);
                 return res.status(200).send({
-                    response: "Announcements found.",
+                    response: "Announcements found.",                    
                     data: results,
                 });
+                
             }
         ); //end of query
     }); //end of mysql.getConnection
@@ -172,6 +174,6 @@ function getNextTenAnnouncementsForUser(req, res) {
 router.post("/create", adminAuth, createAnnouncement, addAnnouncementReceivers);
 router.get("/get-all-announcements-for-user/:userId", userAuth, getAllAnnouncementsForUser);
 router.get("/get-first-ten-announcements-for-user/:userId", userAuth, getFirstTenAnnouncementsForUser);
-router.get("/get-next-ten-announcements-for-user/:userId", userAuth, getNextTenAnnouncementsForUser);
+router.post("/get-next-ten-announcements-for-user/:userId", userAuth, getNextTenAnnouncementsForUser);
 
 module.exports = router;
