@@ -2,6 +2,7 @@ const express = require('express')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt');
 const { route } = require('./user');
+const userAuthorization = require('../middlewares/userAuthorization');
 const router = express.Router()
 const mysql = require('../lib/mysql').pool
 
@@ -136,11 +137,46 @@ function addUserToGroup(req,res){
     });
 }
 
+function getLastGroupMessage(req,res){
+    const userId = req.params.userId;
+    if(!userId){
+        return res.status(400).send({
+            error: 'Missing user id.'
+        });
+    }
+
+    mysql.getConnection((err, connection) => {
+        if(err){
+            return res.status(500).send({
+                error: err
+            });
+        }
+        connection.query(
+            'SELECT message_body, time, sender_id, department_id from GroupMessage where department_id = (SELECT department_id From User where user_id = ?) ORDER BY time DESC LIMIT 1;',
+            [userId],
+            (err, results) => {
+                connection.release();
+                if(err){
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
+                if(results.length == 0){
+                    return res.status(204).send({response: 'No messages found.'});
+                }
+                return res.status(200).send({response: 'Last message retrieved.', data: results[0].message_id});
+            }
+        );
+    });
+
+}
+
 
 router.get('/name/:id', getGroupName);
 router.get('/participants/:id', getGroupParticipants);
 router.get('/creation_date/:id', getGroupCreationDate);
 router.post('/add_user', addUserToGroup);
+router.get('/last_message/:userId', userAuthorization, getLastGroupMessage);
 
 
 
