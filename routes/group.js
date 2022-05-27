@@ -175,8 +175,7 @@ function sendGroupMessage(req, res){
     const message = req.body.message;
     const senderId = req.body.senderId;
     const departmentId = req.body.departmentId;
-    const parentId = req.body.parentId;
-
+    
     if(!message || !senderId || !departmentId){
         return res.status(400).send({
             error: 'Missing message or sender id.'
@@ -190,8 +189,8 @@ function sendGroupMessage(req, res){
             });
         }
         connection.query(
-            'INSERT INTO GroupMessage (message_body, time, sender_id, department_id, parent_message_id) VALUES (?, NOW(), ?, ?, ?);',
-            [message, senderId, departmentId, parentId],
+            'INSERT INTO GroupMessage (message_body, time, sender_id, department_id, parent_message_id) VALUES (?, NOW(), ?, ?, (SELECT message_id FROM GroupMessage WHERE department_id = ? ORDER BY time DESC LIMIT 1));',
+            [message, senderId, departmentId],
             (err, results) => {
                 connection.release();
                 if(err){
@@ -206,13 +205,80 @@ function sendGroupMessage(req, res){
 }
 
 
+function getFirstTenGroupMessages(req, res){
+    const departmentId = req.params.departmentId;
+    if(!departmentId){
+        return res.status(400).send({
+            error: 'Missing department id.'
+        });
+    }
+
+    mysql.getConnection((err, connection) => {
+        if(err){
+            return res.status(500).send({
+                error: err
+            });
+        }
+        connection.query(
+            'SELECT message_id, message_body, time, sender_id, department_id from GroupMessage where department_id = ? ORDER BY time DESC LIMIT 10;',
+            [departmentId],
+            (err, results) => {
+                connection.release();
+                if(err){
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
+                if(results.length == 0){
+                    return res.status(204).send({response: 'No messages found.'});
+                }
+                return res.status(200).send({response: 'First ten messages retrieved.', data: results});
+            }
+        );
+    });
+}
+
+function getNextTenMessages(req, res){
+    const messageId = req.params.messageId;
+    if(!messageId){
+        return res.status(400).send({
+            error: 'Missing message id.'
+        });
+    }
+
+    mysql.getConnection((err, connection) => {
+        if(err){
+            return res.status(500).send({
+                error: err
+            });
+        }
+        connection.query(
+            'SELECT message_id, message_body, time, sender_id, department_id from GroupMessage where department_id = (SELECT department_id From GroupMessage where message_id = ?) AND time < (SELECT time From GroupMessage where message_id = ?) ORDER BY time DESC LIMIT 10;',
+            [messageId],
+            (err, results) => {
+                connection.release();
+                if(err){
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
+                if(results.length == 0){
+                    return res.status(204).send({response: 'No messages found.'});
+                }
+                return res.status(200).send({response: 'Next ten messages retrieved.', data: results});
+            }
+        );
+    });
+}
+
+
 router.get('/name/:id', getGroupName);
 router.get('/participants/:id', getGroupParticipants);
 router.get('/creation_date/:id', getGroupCreationDate);
 router.post('/add_user', addUserToGroup);
 router.get('/last_message/:userId', userAuthorization, getLastGroupMessage);
 router.post('/send_message', userAuthorization, sendGroupMessage);
-
-
+router.get('/first_ten_messages/:departmentId',userAuthorization, getFirstTenGroupMessages);
+router.get('/next_ten_messages/:messageId', userAuthorization, getNextTenMessages);
 
 module.exports = router;
