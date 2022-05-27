@@ -164,7 +164,7 @@ function getLastGroupMessage(req,res){
                 if(results.length == 0){
                     return res.status(204).send({response: 'No messages found.'});
                 }
-                return res.status(200).send({response: 'Last message retrieved.', data: results[0].message_id});
+                return res.status(200).send({response: 'Last message retrieved.', data: results[0]});
             }
         );
     });
@@ -189,8 +189,8 @@ function sendGroupMessage(req, res){
             });
         }
         connection.query(
-            'INSERT INTO GroupMessage (message_body, time, sender_id, department_id, parent_message_id) VALUES (?, NOW(), ?, ?, (SELECT message_id FROM GroupMessage WHERE department_id = ? ORDER BY time DESC LIMIT 1));',
-            [message, senderId, departmentId, departmentId],
+            'INSERT INTO GroupMessage (message_body, time, sender_id, department_id) VALUES (?, NOW(), ?, ?);',
+            [message, senderId, departmentId],
             (err, results) => {
                 connection.release();
                 if(err){
