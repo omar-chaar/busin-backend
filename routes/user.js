@@ -15,7 +15,6 @@ function generateCode(req, res) {
     const surname = req.body.surname;
     const admin = req.body.admin || false;
 
-    console.log(req.body)
 
     if (!departmentId || !position || !name || !surname) {
         console.log('?')
@@ -377,7 +376,7 @@ function getUserByToken(req, res) {
                 (err, results) => {
                     connection.release();
                     if (err) {
-                        console.log(err);
+                       
                         return res.status(500).send({
                             error: err
                         });
