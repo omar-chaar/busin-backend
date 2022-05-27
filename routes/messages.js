@@ -19,7 +19,6 @@ function getMessageForUser(req, res) {
         //send the last 10 messages
         mysql.getConnection((err, connection) => {
             if (err) {
-                console.log(err);
                 return res.status(500).send({
                     error: err,
                 });
@@ -35,7 +34,7 @@ function getMessageForUser(req, res) {
                         });
                     }
 
-                    console.log(results);
+                   
                     const chats = [];
                     results.forEach((message) => {
                         const chatId = message.sender_id + message.receiver_id;
@@ -179,7 +178,7 @@ function getParentMessage(req, res) {
                         error: err,
                     });
                 }
-                console.log(results);
+               
                 return res.status(200).send({
                     messages: results,
                 });

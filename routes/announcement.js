@@ -158,7 +158,6 @@ function getNextTenAnnouncementsForUser(req, res) {
                         error: err,
                     });
                 }
-                console.log(userId + " " + announcementId);
                 return res.status(200).send({
                     response: "Announcements found.",                    
                     data: results,

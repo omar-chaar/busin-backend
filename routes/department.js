@@ -13,8 +13,6 @@ function createDepartment(req, res){
     const name = req.body.name;
     const companyId = req.body.companyId;
 
-    console.log(name)
-    console.log(companyId)
     if(!name || !companyId){
         return res.status(400).send({
             error: 'Missing information.'
