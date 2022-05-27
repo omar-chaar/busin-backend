@@ -171,12 +171,47 @@ function getLastGroupMessage(req,res){
 
 }
 
+function sendGroupMessage(req, res){
+    const message = req.body.message;
+    const senderId = req.body.senderId;
+    const departmentId = req.body.departmentId;
+    const parentId = req.body.parentId;
+
+    if(!message || !senderId || !departmentId){
+        return res.status(400).send({
+            error: 'Missing message or sender id.'
+        });
+    }
+
+    mysql.getConnection((err, connection) => {
+        if(err){
+            return res.status(500).send({
+                error: err
+            });
+        }
+        connection.query(
+            'INSERT INTO GroupMessage (message_body, time, sender_id, department_id, parent_message_id) VALUES (?, NOW(), ?, ?, ?);',
+            [message, senderId, departmentId, parentId],
+            (err, results) => {
+                connection.release();
+                if(err){
+                    return res.status(500).send({
+                        error: err
+                    });
+                }
+                return res.status(200).send({response: 'Message sent.'});
+            }
+        );
+    });
+}
+
 
 router.get('/name/:id', getGroupName);
 router.get('/participants/:id', getGroupParticipants);
 router.get('/creation_date/:id', getGroupCreationDate);
 router.post('/add_user', addUserToGroup);
 router.get('/last_message/:userId', userAuthorization, getLastGroupMessage);
+router.post('/send_message', userAuthorization, sendGroupMessage);
 
 
 
