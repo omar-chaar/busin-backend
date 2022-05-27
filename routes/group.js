@@ -190,7 +190,7 @@ function sendGroupMessage(req, res){
         }
         connection.query(
             'INSERT INTO GroupMessage (message_body, time, sender_id, department_id, parent_message_id) VALUES (?, NOW(), ?, ?, (SELECT message_id FROM GroupMessage WHERE department_id = ? ORDER BY time DESC LIMIT 1));',
-            [message, senderId, departmentId],
+            [message, senderId, departmentId, departmentId],
             (err, results) => {
                 connection.release();
                 if(err){
