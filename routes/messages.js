@@ -230,11 +230,11 @@ function getMessages(req, res) {
 
 //get number of unreads
 function getUnread(req, res) {
-    const userId = req.params.userId;
-    const user2Id = req.params.user2Id;
+    const receiverId = req.body.receiverId;
+    const senderId = req.body.senderId;
     if (!userId || !user2Id) {
         return res.status(400).send({
-            error: "Missing userId or user2Id.",
+            error: "Missing information",
         });
     }
     mysql.getConnection((err, connection) => {
@@ -244,7 +244,7 @@ function getUnread(req, res) {
             });
         }
         connection.query(
-            "SELECT COUNT(*) AS unread FROM Message WHERE (receiver_id = ? AND sender_id = ?) AND was_seen = false AND receiver_id = ?;",
+            "SELECT COUNT(*) AS unread FROM Message WHERE (receiver_id = ? AND sender_id = ?) AND was_seen = false",
             [userId, user2Id, userId],
             (err, results) => {
                 connection.release();
@@ -258,6 +258,8 @@ function getUnread(req, res) {
                 });
             }
         );
+        
+        
     });
 }
 
@@ -295,7 +297,7 @@ function getNextTenMessages(req, res) {
 
 }
 
-router.get("get-unread/:userId/:user2Id", getUnread);
+router.post("get-unread/", userAuthorization, getUnread);
 router.get("/get-messages/:userId", getMessageForUser);
 router.get("/parentmessage/:messageId", userAuthorization, getParentMessage);
 router.put("/was-seen/:userId/:user2Id", userAuthorization, wasSeen);
