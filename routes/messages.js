@@ -91,65 +91,6 @@ function getMessageForUser(req, res) {
     }
 }
 
-function getGroupMessageForUser(req, res) {
-    const userId = req.params.userId;
-    const lastMessageId = req.query.lastMessageId;
-    if (!userId) {
-        return res.status(400).send({
-            error: "Missing userId.",
-        });
-    }
-    if (!lastMessageId) {
-        //send the last 10 messages
-        mysql.getConnection((err, connection) => {
-            if (err) {
-                return res.status(500).send({
-                    error: err,
-                });
-            }
-            connection.query(
-                "SELECT * FROM GroupMessage WHERE group_id IN (SELECT group_id FROM GroupParticipant WHERE user_id = ?) AND group_message_id NOT IN (SELECT parent_message_id FROM GroupMessage WHERE IS NOT NULL)  ORDER BY time DESC LIMIT 10;",
-                [userId],
-                (err, results) => {
-                    connection.release();
-                    if (err) {
-                        return res.status(500).send({
-                            error: err,
-                        });
-                    }
-                    return res.status(200).send({
-                        messages: results,
-                    });
-                }
-            );
-        });
-    } else {
-        //send the messages after the lastMessageId
-        mysql.getConnection((err, connection) => {
-            if (err) {
-                return res.status(500).send({
-                    error: err,
-                });
-            }
-            connection.query(
-                //get time from lastMessageId and check next 10 messages
-                "SELECT * FROM GroupMessage WHERE group_id IN (SELECT group_id FROM GroupParticipant WHERE user_id = ?) AND time < (SELECT time FROM GroupMessage WHERE group_message_id = ?) ORDER BY id DESC LIMIT 10;",
-                [userId, lastMessageId],
-                (err, results) => {
-                    connection.release();
-                    if (err) {
-                        return res.status(500).send({
-                            error: err,
-                        });
-                    }
-                    return res.status(200).send({
-                        messages: results,
-                    });
-                }
-            );
-        });
-    }
-}
 
 function getParentMessage(req, res) {
     const messageId = req.params.messageId;
@@ -213,31 +154,6 @@ function wasSeen(req, res) {
     });
 }
 
-function Unseen(req, res) {
-    const userId = req.params.userId;
-    const user2Id = req.params.user2Id;
-    if (!userId || !user2Id) {
-        return res.status(400).send({ error: "Missing userId." });
-    }
-    mysql.getConnection((err, connection) => {
-        if (err) {
-            return res.status(500).send({ error: err });
-        }
-        connection.query(
-            "UPDATE Message SET was_seen = TRUE WHERE (sender_id = ? AND receiver_id = ?) OR (receiver_id = ? AND sender_id = ?) AND was_seen = false;",
-            [userId, user2Id, userId, user2Id],
-            (err, results) => {
-                connection.release();
-                if (err) {
-                    return res.status(500).send({ error: err });
-                }
-                return res.status(200).send({
-                    messages: results,
-                });
-            }
-        );
-    });
-}
 
 function insertMessage(req, res) {
     const message = req.body.message;
@@ -381,10 +297,8 @@ function getNextTenMessages(req, res) {
 
 router.get("get-unread/:userId/:user2Id", getUnread);
 router.get("/get-messages/:userId", getMessageForUser);
-router.get("/groupmessages/:userId", getGroupMessageForUser);
 router.get("/parentmessage/:messageId", userAuthorization, getParentMessage);
 router.put("/was-seen/:userId/:user2Id", userAuthorization, wasSeen);
-router.put("/unseen/:userId/:user2Id", userAuthorization, Unseen);
 router.post("/insert-message", userAuthorization, insertMessage);
 router.get("/get-messages/:userId/:user2Id", userAuthorization, getMessages);
 router.get("/get-next-ten-messages/:userId/:user2Id", userAuthorization, getNextTenMessages);
