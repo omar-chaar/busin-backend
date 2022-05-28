@@ -98,8 +98,6 @@ function getParentMessage(req, res) {
     const user2Id = req.query.user2Id;
     const page = parseInt(req.query.page) * 10
 
-    console.log(req.query.page)
-
     if (!messageId) {
         return res.status(400).send({
             error: "Missing messageId.",
