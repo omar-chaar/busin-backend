@@ -18,13 +18,11 @@ io.on('connection', (socket) => { //add sender as a requirement for this functio
   });
 
   socket.on('message', (message) => {
-    console.log(message);
     console.log(connectedUsers);
     Object.entries(connectedUsers).forEach(([key, value]) => {
       
       const decode = jwt.verify(key, process.env.JWT_KEY)
       const user = decode
-      console.log(user)
       if(!user.userId){ //in this case a user is connected with an invalid token and will be disconnected
         io.to(value).emit('exception', {errorMessage: 'Invalid token connected, please log in again'});
         io.sockets.sockets[value].disconnect();
@@ -44,7 +42,7 @@ io.on('connection', (socket) => { //add sender as a requirement for this functio
   //group functions 
 
   socket.on('group-connection', (room) => {
-    console.log(room);
+    console.log("User connected to group: " + room);
     socket.join(room);
   
     socket.on('group-message', (message) => {

@@ -17,7 +17,6 @@ function generateCode(req, res) {
 
 
     if (!departmentId || !position || !name || !surname) {
-        console.log('?')
         return res.status(400).send({
             error: 'Missing information.'
         });
