@@ -122,6 +122,8 @@ function getParentMessage(req, res) {
                         error: err,
                     });
                 }
+
+                results.reverse();
                
                 return res.status(200).send({
                     messages: results,
