@@ -109,31 +109,7 @@ function getParentMessage(req, res) {
     });
 }
 
-function wasSeen(req, res) {
-    const userId = req.params.userId;
-    const user2Id = req.params.user2Id;
-    if (!userId || !user2Id) {
-        return res.status(400).send({ error: "Missing userId." });
-    }
-    mysql.getConnection((err, connection) => {
-        if (err) {
-            return res.status(500).send({ error: err });
-        }
-        connection.query(
-            "UPDATE Message SET was_seen = 1 WHERE (receiver_id = ? AND sender_id = ?) OR (sender_id = ? AND receiver_id = ?) AND was_seen = false;",
-            [userId, user2Id, userId, user2Id],
-            (err, results) => {
-                connection.release();
-                if (err) {
-                    return res.status(500).send({ error: err });
-                }
-                return res.status(200).send({
-                    messages: results,
-                });
-            }
-        );
-    });
-}
+
 
 
 function insertMessage(req, res) {
@@ -213,7 +189,7 @@ function getMessages(req, res) {
 function getUnread(req, res) {
     const receiverId = req.body.receiverId;
     const senderId = req.body.senderId;
-    if (!userId || !user2Id) {
+    if (!receiverId || !senderId) {
         return res.status(400).send({
             error: "Missing information",
         });
@@ -226,7 +202,7 @@ function getUnread(req, res) {
         }
         connection.query(
             "SELECT COUNT(*) AS unread FROM Message WHERE (receiver_id = ? AND sender_id = ?) AND was_seen = false",
-            [userId, user2Id, userId],
+            [receiverId, senderId],
             (err, results) => {
                 connection.release();
                 if (err) {
@@ -241,6 +217,32 @@ function getUnread(req, res) {
         );
         
         
+    });
+}
+
+function wasSeen(req, res) {
+    const userId = req.params.userId;
+    const user2Id = req.params.user2Id;
+    if (!userId || !user2Id) {
+        return res.status(400).send({ error: "Missing userId." });
+    }
+    mysql.getConnection((err, connection) => {
+        if (err) {
+            return res.status(500).send({ error: err });
+        }
+        connection.query(
+            "UPDATE Message SET was_seen = 1 WHERE (receiver_id = ? AND sender_id = ?) OR (sender_id = ? AND receiver_id = ?) AND was_seen = false;",
+            [userId, user2Id, userId, user2Id],
+            (err, results) => {
+                connection.release();
+                if (err) {
+                    return res.status(500).send({ error: err });
+                }
+                return res.status(200).send({
+                    messages: results,
+                });
+            }
+        );
     });
 }
 
