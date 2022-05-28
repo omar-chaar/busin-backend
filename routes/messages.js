@@ -96,6 +96,9 @@ function getParentMessage(req, res) {
     const messageId = req.params.messageId;
     const userId = req.query.userId;
     const user2Id = req.query.user2Id;
+    const page = parseInt(req.query.page) * 10
+
+    console.log(req.query.page)
 
     if (!messageId) {
         return res.status(400).send({
@@ -110,8 +113,8 @@ function getParentMessage(req, res) {
         }
         connection.query(
             //get the next 10 messages using the time of last message id
-            "SELECT * FROM Message WHERE (receiver_id = ? AND sender_id = ?) or (receiver_id = ? AND sender_id = ?) and time < (SELECT time FROM Message WHERE message_id = ?) ORDER BY time DESC LIMIT 10;",
-            [userId, user2Id, user2Id, userId, messageId],
+            "SELECT * FROM Message WHERE (receiver_id = ? AND sender_id = ?) or (receiver_id = ? AND sender_id = ?) ORDER BY time DESC LIMIT 10 OFFSET ?;",
+            [userId, user2Id, user2Id, userId, page],
             (err, results) => {
                 connection.release();
                 if (err) {
