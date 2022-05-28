@@ -282,7 +282,7 @@ function getNextTenMessages(req, res) {
 
 }
 
-router.post("get-unread/", userAuthorization, getUnread);
+router.post("/get-unread", userAuthorization, getUnread);
 router.post("/get-messages/:userId", getMessageForUser);
 router.get("/parentmessage/:messageId", userAuthorization, getParentMessage);
 router.put("/was-seen/:userId/:user2Id", userAuthorization, wasSeen);
