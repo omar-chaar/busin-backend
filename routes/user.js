@@ -469,7 +469,7 @@ function getUsersByDepartment(req, res) {
             });
         }
         connection.query(
-            'SELECT user_id, name, surname, email, department_id, is_adm, is_owner, position FROM User WHERE department_id = ? WHERE email is not null;',
+            'SELECT user_id, name, surname, email, department_id, is_adm, is_owner, position FROM User WHERE department_id = ? AND email is not null;',
             [departmentId],
             (err, results) => {
                 connection.release();
