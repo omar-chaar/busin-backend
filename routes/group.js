@@ -198,7 +198,7 @@ function sendGroupMessage(req, res){
                         error: err
                     });
                 }
-                return res.status(200).send({response: 'Message sent.'});
+                return res.status(200).send({ response: results.insertId,});
             }
         );
     });

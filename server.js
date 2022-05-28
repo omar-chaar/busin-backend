@@ -41,7 +41,28 @@ io.on('connection', (socket) => { //add sender as a requirement for this functio
       }      
     });
   });
+  //group functions 
+
+  socket.on('group-connection', (room) => {
+    console.log(room);
+    socket.join(room);
+  
+    socket.on('group-message', (message) => {
+      console.log("Message received" + message.message + " " + room + " " + socket.id);
+
+      io.to(room).emit('group-message', message);
+    });
+  
+    socket.on('group-disconnect', (reason) => {
+      socket.leave(room);
+      return console.log("Id: "+ socket.id + " disconnected for the reason: " + reason + " from the room: " + room);
+    });  
+   
+  });
 });
+
+
+
 
 server.listen(port, () => {
     console.log(`Server running on port ${port}`)
