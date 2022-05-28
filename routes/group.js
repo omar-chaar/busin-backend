@@ -220,7 +220,7 @@ function getFirstTenGroupMessages(req, res){
             });
         }
         connection.query(
-            'SELECT group_message_id, message_body, time, sender_id, GroupMessage.department_id, User.name from GroupMessage INNER JOIN User ON user_id = sender_id where GroupMessage.department_id = ? ORDER BY time DESC LIMIT 10;',
+            'SELECT group_message_id, message_body, time, sender_id, User.department_id, User.name, Department.name as deptname from GroupMessage INNER JOIN User ON user_id = sender_id INNER JOIN Department ON Department.department_id = User.department_id where GroupMessage.department_id = ? ORDER BY time DESC LIMIT 10;',
             [departmentId],
             (err, results) => {
                 connection.release();
@@ -253,7 +253,7 @@ function getNextTenMessages(req, res){
             });
         }
         connection.query(
-            'SELECT group_message_id, message_body, time, sender_id, GroupMessage.department_id User.name from GroupMessage INNER JOIN User on sender_id = user_id where GroupMessage.department_id = (SELECT department_id From GroupMessage where message_id = ?) AND time < (SELECT time From GroupMessage where message_id = ?) ORDER BY time DESC LIMIT 10;',
+            'SELECT group_message_id, message_body, time, sender_id, GroupMessage.department_id User.name, Department.name as deptname from GroupMessage INNER JOIN User on sender_id = user_id INNER JOIN Department ON Department.department_id = User.department_id where GroupMessage.department_id = (SELECT department_id From GroupMessage where message_id = ?) AND time < (SELECT time From GroupMessage where message_id = ?) ORDER BY time DESC LIMIT 10;',
             [messageId],
             (err, results) => {
                 connection.release();
