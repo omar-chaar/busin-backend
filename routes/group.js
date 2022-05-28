@@ -239,10 +239,11 @@ function getFirstTenGroupMessages(req, res){
 }
 
 function getNextTenMessages(req, res){
-    const messageId = req.params.messageId;
-    if(!messageId){
+    const departmentId = req.params.departmentId;
+    const page = parseInt(req.body.page) * 10;
+    if(!departmentId || typeof page === undefined){
         return res.status(400).send({
-            error: 'Missing message id.'
+            error: 'Missing message id or page.'
         });
     }
 
@@ -253,8 +254,12 @@ function getNextTenMessages(req, res){
             });
         }
         connection.query(
-            'SELECT group_message_id, message_body, time, sender_id, GroupMessage.department_id User.name, Department.name as deptname from GroupMessage INNER JOIN User on sender_id = user_id INNER JOIN Department ON Department.department_id = User.department_id where GroupMessage.department_id = (SELECT department_id From GroupMessage where message_id = ?) AND time < (SELECT time From GroupMessage where message_id = ?) ORDER BY time DESC LIMIT 10;',
-            [messageId],
+            'SELECT group_message_id, message_body, time, sender_id,' +
+             'User.department_id, User.name, Department.name as deptname ' +
+             'from GroupMessage INNER JOIN User ON user_id = sender_id INNER ' +
+              'JOIN Department ON Department.department_id = User.department_id ' +
+               'where GroupMessage.department_id = ? ORDER BY time DESC LIMIT 10 OFFSET ?;',
+            [departmentId, page],
             (err, results) => {
                 connection.release();
                 if(err){
@@ -279,6 +284,6 @@ router.post('/add_user', addUserToGroup);
 router.get('/last_message/:userId', userAuthorization, getLastGroupMessage);
 router.post('/send_message', userAuthorization, sendGroupMessage);
 router.get('/first_ten_messages/:departmentId',userAuthorization, getFirstTenGroupMessages);
-router.get('/next_ten_messages/:messageId', userAuthorization, getNextTenMessages);
+router.post('/next_ten_messages/:departmentId', getNextTenMessages);
 
 module.exports = router;

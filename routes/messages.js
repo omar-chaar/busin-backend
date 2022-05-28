@@ -6,16 +6,15 @@ const userAuthorization = require("../middlewares/userAuthorization");
 const router = express.Router();
 const mysql = require("../lib/mysql").pool;
 
-//TODO: TEST THIS FUNCTION
 function getMessageForUser(req, res) {
     const userId = req.params.userId;
-    const lastMessageId = req.query.lastMessageId;
-    if (!userId) {
+    const page = parseInt(req.body.page) * 10
+    console.log(!page);
+    if (!userId || typeof page === "undefined") {
         return res.status(400).send({
-            error: "Missing userId.",
+            error: "Missing information.",
         });
     }
-    if (!lastMessageId) {
         //send the last 10 messages
         mysql.getConnection((err, connection) => {
             if (err) {
@@ -24,8 +23,12 @@ function getMessageForUser(req, res) {
                 });
             }
             connection.query(
-                "SELECT message_id, sender_id, receiver_id, time, message_body, parent_message_id, was_seen, user_id, name, surname, profile_picture from Message INNER JOIN User ON receiver_id = user_id OR sender_id = user_id where message_id not in (SELECT parent_message_id FROM Message WHERE parent_message_id is not null) and (receiver_id = ? OR sender_id = ?) and user_id != ? ORDER BY time DESC LIMIT 10;",
-                [userId, userId, userId],
+                "SELECT message_id, sender_id, receiver_id, time, message_body, parent_message_id, "+ 
+                "was_seen, user_id, name, surname, profile_picture from Message INNER JOIN User ON " +
+                " receiver_id = user_id OR sender_id = user_id where message_id not in (SELECT " + 
+                "parent_message_id FROM Message WHERE parent_message_id is not null) and (receiver_id = ? " +
+                 " OR sender_id = ?) and user_id != ? ORDER BY time DESC LIMIT 10 OFFSET ?;",
+                [userId, userId, userId, page],
                 (err, results) => {
                     connection.release();
                     if (err) {
@@ -63,33 +66,8 @@ function getMessageForUser(req, res) {
                 }
             );
         });
-    } else {
-        //send the messages after the lastMessageId
-        mysql.getConnection((err, connection) => {
-            if (err) {
-                return res.status(500).send({
-                    error: err,
-                });
-            }
-            connection.query(
-                //get time from lastMessageId and check next 10 messages
-                "SELECT message_id, sender_id, receiver_id, time, message_body, parent_message_id, was_seen, name, surname, profile_picture from Message INNER JOIN User ON receiver_id = user_id OR sender_id = user_id where message_id not in (SELECT parent_message_id FROM Message WHERE parent_message_id is not null) AND time < (SELECT time FROM Message WHERE message_id = ?) and (receiver_id = ? OR sender_id = ?) and user_id != ? ORDER BY time DESC LIMIT 10;",
-                [lastMessageId, userId, userId, userId],
-                (err, results) => {
-                    connection.release();
-                    if (err) {
-                        return res.status(500).send({
-                            error: err,
-                        });
-                    }
-                    return res.status(200).send({
-                        messages: results,
-                    });
-                }
-            );
-        });
     }
-}
+
 
 
 function getParentMessage(req, res) {
@@ -270,7 +248,7 @@ function getNextTenMessages(req, res) {
     const userId = req.params.userId;
     const user2Id = req.params.user2Id;
     const lastMessageId = req.body.lastMessageId;
-    if (!userId || !user2I || !lastMessageId) {
+    if (!userId || !user2Id || !lastMessageId) {
         return res.status(400).send({
             error: "Missing userId or user2Id or lastMessageId.",
         });
@@ -282,7 +260,9 @@ function getNextTenMessages(req, res) {
             });
         }
         connection.query(
-            "SELECT message_id, body, sender_id, receiver_id, time, was_seen  FROM Message WHERE (receiver_id = ? AND sender_id = ?) or (receiver_id = ? AND sender_id = ?) AND time < (SELECT time FROM Message WHERE message_id = ?) ORDER BY time DESC LIMIT 10;",
+            "SELECT message_id, body, sender_id, receiver_id, time, was_seen  FROM Message WHERE" + 
+            " (receiver_id = ? AND sender_id = ?) or (receiver_id = ? AND sender_id = ?) AND time <" + 
+            " (SELECT time FROM Message WHERE message_id = ?) ORDER BY time DESC LIMIT 10;",
             [userId, user2Id, user2Id, userId, lastMessageId],
             (err, results) => {
                 connection.release();
@@ -301,7 +281,7 @@ function getNextTenMessages(req, res) {
 }
 
 router.post("get-unread/", userAuthorization, getUnread);
-router.get("/get-messages/:userId", getMessageForUser);
+router.post("/get-messages/:userId", getMessageForUser);
 router.get("/parentmessage/:messageId", userAuthorization, getParentMessage);
 router.put("/was-seen/:userId/:user2Id", userAuthorization, wasSeen);
 router.post("/insert-message", userAuthorization, insertMessage);
