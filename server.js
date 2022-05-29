@@ -8,38 +8,33 @@ const jwt = require('jsonwebtoken')
 const io = require('socket.io')(server, {
     cors: {origin : '*'}
   }); //allowing all cors for development
-  
-var connectedUsers = {}; 
 
-io.on('connection', (socket) => { //add sender as a requirement for this function
- 
+io.on('connection', (socket) => {
   socket.on('token', (token) => {
-    connectedUsers[token] = socket.id;
-  });
+    const user = jwt.verify(token, process.env.JWT_KEY)
+    let room = ''
+    socket.on('private-connection', (otherUserId) => {    
+      if(otherUserId){
+        let ids = [user.userId, otherUserId]
+        ids.sort();
+        room = ids.join('-');
+        socket.join(room);
+        console.log(`${user.userId} is now connected in room ${room}`);
+      } else {
+        socket.disconnect();
+      }
+      socket.on('message', (message) => {
+        
+        console.log("Private message received" + message.message + " " + room + " " + socket.id);
 
-  socket.on('message', (message) => {
-    console.log(connectedUsers);
-    Object.entries(connectedUsers).forEach(([key, value]) => {
-      
-      const decode = jwt.verify(key, process.env.JWT_KEY)
-      const user = decode
-      if(!user.userId){ //in this case a user is connected with an invalid token and will be disconnected
-        io.to(value).emit('exception', {errorMessage: 'Invalid token connected, please log in again'});
-        io.sockets.sockets[value].disconnect();
-      } else if(user.userId == message.receiver){
-        return io.to(value).emit('message', message);
-      }      
-    });
+        io.to(room).emit('message', message);
+      });
+      socket.on('disconnect', (reason) => {
+        socket.leave(room);
+        return console.log("Id: "+ socket.id + " disconnected for the reason: " + reason + " from the private room: " + room);
+      });  
+    })
   });
-
-  socket.on('disconnect', () => {
-    Object.entries(connectedUsers).forEach(([key, value]) => {
-      if(value === socket.id){
-        delete connectedUsers[key];
-      }      
-    });
-  });
-  //group functions 
 
   socket.on('group-connection', (room) => {
     console.log("User connected to group: " + room);
@@ -58,9 +53,6 @@ io.on('connection', (socket) => { //add sender as a requirement for this functio
    
   });
 });
-
-
-
 
 server.listen(port, () => {
     console.log(`Server running on port ${port}`)
