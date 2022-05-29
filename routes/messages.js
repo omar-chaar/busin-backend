@@ -8,8 +8,7 @@ const mysql = require("../lib/mysql").pool;
 
 function getMessageForUser(req, res) {
     const userId = req.params.userId;
-    const page = parseInt(req.body.page) * 10
-    console.log(!page);
+    const page = parseInt(req.body.page) * 10;
     if (!userId || typeof page === "undefined") {
         return res.status(400).send({
             error: "Missing information.",
