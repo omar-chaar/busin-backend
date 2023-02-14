@@ -105,3 +105,8 @@ dist
 
 #Environment Variables
 nodemon.json
+
+# Py cache
+__pycache__/
+*.py[cod]
+*$py.class
