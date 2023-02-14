@@ -110,3 +110,6 @@ nodemon.json
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Credentials
+credentials.py
