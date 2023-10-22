@@ -2,6 +2,36 @@
 
 Busin is a business communication app that enables teams to collaborate in real-time. This repository contains the server-side code for the Busin app.
 
+## Table of Contents
+    
+- [Installation](#installation) 
+- [Technologies Used](#technologies-used)
+- [Features](#features)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Installation
+
+To install the Busin server, follow these steps:
+
+1. Clone the repository.
+2. Create a mySQL database.
+3. Create a nodemon.json with the following content:
+    ```json
+    {
+        "env": {
+            "DB_HOST": "",
+            "DB_USER": "",
+            "DB_PASSWORD": "",
+            "DB_NAME": "",
+            "JWT_SECRET": ""
+        }
+    }
+    ```
+4. Run `npm install` to install the dependencies.
+5. Run `npm start` to start the server.
+6. The server will be running on `http://localhost:3001` by default.
+
 ## Technologies Used
 
 The following technologies were used to develop the Busin server:
